@@ -17,3 +17,17 @@
 - [x] Capturar e revisar o layout em um viewport compacto para comprovar a adaptação mobile.
 - [x] Registrar a análise objetiva de hierarquia, legibilidade, CTAs e ausência de overflow nos layouts verificados.
 - [x] Produzir a documentação de arquitetura, integração, segurança e roteiro de validação.
+- [x] Inspecionar o aplicativo de referência flow-wise-tap e registrar layout, fluxos, textos, componentes e interações.
+- [x] Comparar o aplicativo de referência com a interface Maverick atual e definir as diferenças visuais e funcionais.
+- [x] Reconstruir a interface do Totem Maverick para corresponder ao aplicativo de referência, preservando os contratos REST e proteções operacionais.
+- [x] Validar a correspondência da versão reconstruída no formato vertical de totem de 7 polegadas.
+- [x] Projetar e validar todas as telas para touchscreen vertical de 7 polegadas, com foco em áreas de toque e legibilidade.
+- [x] Priorizar a entrega da reconstrução visual essencial antes de refinamentos adicionais ou novos fluxos.
+- [x] Capturar e revisar visualmente todos os estados reconstruídos do totem 7 polegadas, registrando aderência à referência.
+- [x] Ajustar controles e campos interativos para áreas de toque mínimas de 48 pixels e revalidar ergonomia.
+- [x] Corrigir o indicador de conectividade para refletir perda de rede também no estado IDLE.
+- [x] Auditar por código todos os controles interativos das telas reconstruídas e comprovar área mínima de toque de 48 pixels.
+- [x] Adicionar validação verificável para o indicador offline no estado IDLE.
+- [x] Criar testes de renderização que cubram todos os controles reconstruídos e seus alvos mínimos de toque.
+- [x] Criar teste de renderização que confirme a classe visual offline do cabeçalho no estado IDLE.
+- [x] Reconstruir a tela inicial, Face ID, cadastro de cartão, autorização, sessão ativa e encerramento no padrão visual compacto da referência.
