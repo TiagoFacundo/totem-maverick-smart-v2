@@ -1,0 +1,50 @@
+flowchart TB
+  classDef pi fill:#d7ecff,stroke:#1769aa,color:#102a43,stroke-width:2px;
+  classDef signal fill:#e9f7ef,stroke:#2e8b57,color:#163d28,stroke-width:2px;
+  classDef power fill:#fff4d6,stroke:#c27d00,color:#5e3b00,stroke-width:2px;
+  classDef safety fill:#ffe3e3,stroke:#bd2020,color:#631111,stroke-width:3px;
+  classDef load fill:#efe2ff,stroke:#6a3ca1,color:#31115a,stroke-width:2px;
+  classDef note fill:#f4f6f8,stroke:#6c757d,color:#25323d,stroke-width:1px;
+
+  subgraph RPI["Raspberry Pi — somente sinais de baixa tensão"]
+    GPIO17["GPIO 17\ncontrole do relé"]:::pi
+    GPIO27["GPIO 27\npulsos do sensor"]:::pi
+    PI5V["5 V do Pi\npara o sensor"]:::pi
+    PIG["GND do Pi"]:::pi
+  end
+
+  subgraph BB["Protoboard — sinais e distribuição de baixa tensão"]
+    R5["Trilho +5 V"]:::signal
+    RG["Trilho GND"]:::signal
+    FS["Sensor de fluxo\nVCC · GND · PULSO"]:::signal
+    RIN["Módulo relé/driver isolado\nIN · VCC · GND\ncontatos COM · NO"]:::power
+  end
+
+  subgraph PWR["Fonte exclusiva da válvula — tensão conforme a bobina"]
+    FUSE["Fusível dimensionado\npróximo ao positivo"]:::safety
+    ESTOP["BOTÃO E-STOP FÍSICO\nnormalmente fechado"]:::safety
+    VPLUS["+V da fonte\n12 V / 24 V conforme a válvula"]:::power
+    VMINUS["0 V da fonte"]:::power
+  end
+
+  subgraph LOAD["Carga de potência — fora do Raspberry Pi"]
+    VALVE["Válvula solenoide\nBobina DC"]:::load
+    DIODE["Diodo de flyback\nse a carga/driver exigir\ncatodo no +V"]:::safety
+  end
+
+  GPIO17 -->|"fio de sinal"| RIN
+  PIG -. "referência de sinal\nconforme o relé isolado" .-> RIN
+  PI5V --> R5
+  PIG --> RG
+  R5 -->|"VCC"| FS
+  RG -->|"GND"| FS
+  FS -->|"PULSO"| GPIO27
+
+  VPLUS --> FUSE --> ESTOP -->|"COM do relé"| RIN
+  RIN -->|"NO do relé"| VALVE
+  VALVE --> VMINUS
+  DIODE -.- VALVE
+
+  NOTE["NÃO ligar a bobina da válvula nem a fonte de potência\nao GPIO ou aos trilhos da protoboard.\nA protoboard é apenas para sinais de baixa corrente.\nUse driver/relé isolado, bornes adequados e caixa de proteção."]:::note
+  NOTE -.- RPI
+  NOTE -.- PWR

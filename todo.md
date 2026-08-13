@@ -77,3 +77,10 @@
 - [x] Consolidar as entregas implementadas e suas evidências de validação.
 - [x] Identificar as lacunas para integração real, segurança operacional e homologação física.
 - [x] Redigir e revisar o resumo de status com prioridades de execução.
+- [ ] Confirmar componentes da bancada, intertravamentos físicos e circuito de parada de emergência antes de energizar a solenoide.
+- [ ] Preparar e validar o agente Raspberry Pi, GPIOs e telemetria em modo sem carga.
+- [ ] Executar testes controlados de relé, sensor de fluxo, limites, perda de rede e parada de emergência.
+- [ ] Registrar os resultados da homologação, as não conformidades e os critérios para liberar a operação em bancada.
+- [x] Definir as conexões seguras de Raspberry Pi, relé/driver, sensor de fluxo, fonte e válvula para o diagrama de protoboard.
+- [x] Criar uma imagem técnica de referência da ligação em protoboard com proteção elétrica e E-stop físico.
+- [x] Revisar a legibilidade do diagrama e registrar suas limitações de segurança antes da entrega.
