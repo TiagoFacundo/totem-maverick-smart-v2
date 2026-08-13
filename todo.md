@@ -66,3 +66,6 @@
 - [x] Localizar a senha de teste usada pelo simulador Face ID e pelos cenários de autorização.
 - [x] Alterar a senha de teste do Face ID para 250712 sem modificar regras de autorização.
 - [x] Validar a nova senha de teste e a transição para Servindo seu chopp.
+- [x] Inventariar os componentes, fluxos, contratos REST, agente Raspberry Pi e testes implementados.
+- [x] Redigir documentação técnica completa com arquitetura, segurança, operação e limitações atuais.
+- [x] Revisar a documentação contra o código e os testes antes da entrega.
