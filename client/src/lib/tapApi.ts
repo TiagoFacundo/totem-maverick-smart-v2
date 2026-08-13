@@ -41,7 +41,7 @@ export const tapApi = {
   newIdempotencyKey: () => createSessionId(),
   getCommand: () => requestWithRetry<CommandResponse>(`/api/public/tap/${TAP_ID}/command`, { headers: { "X-Totem-ID": TOTEM_ID } }, 1),
   getStatus: () => requestWithRetry<{ status: string }>(`/api/public/tap/${TAP_ID}/status`, { headers: { "X-Totem-ID": TOTEM_ID } }, 1),
-  authorizeFace: (payload: JsonRecord) => requestWithRetry<{ authorized: boolean; reason?: string }>(`/api/public/tap/${TAP_ID}/authorize/face`, {
+  authorizeFace: (payload: JsonRecord) => requestWithRetry<{ authorized?: boolean; recognized?: boolean; reason?: string; session_id?: string; user_id?: string; face_token?: string; max_value_cents?: number; max_volume_ml?: number }>(`/api/public/tap/${TAP_ID}/authorize/face`, {
     method: "POST",
     headers: headers(createSessionId()),
     body: JSON.stringify({ tap_id: TAP_ID, totem_id: TOTEM_ID, ...payload }),

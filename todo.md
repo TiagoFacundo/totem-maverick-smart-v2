@@ -46,3 +46,11 @@
 - [x] Testar o polling do controlador com `start_pour` do servidor e a transição automática para dispensação.
 - [x] Conectar a ação de leitura simulada do QR da Wallet ao controlador real de autorização antes da abertura da sessão.
 - [x] Extrair e testar a decisão de transição do estado IDLE para POURING usada pelo fluxo principal ao receber `start_pour`.
+- [x] Mapear a sequência atual de Face ID e identificar o ponto que permite dispensação antes da senha e do limite autorizado.
+- [x] Fazer o fluxo Face ID solicitar a senha somente após reconhecimento facial bem-sucedido, preservando os tratamentos de erro existentes.
+- [x] Exigir resposta positiva do servidor com identificação do cliente e limite de crédito antes de iniciar a dispensação por Face ID.
+- [x] Garantir que a dispensação por Face ID respeite o limite de crédito autorizado sem modificar os demais métodos de compra ou integrações.
+- [x] Cobrir a sequência Face ID → senha → servidor → limite autorizado → dispensação com testes de regressão.
+- [x] Implementar uma validação explícita de sucesso ou falha biométrica antes da tela de senha, sem usar temporizador como autorização.
+- [x] Adicionar teste de falha biométrica que impeça a exibição da senha e preserve o tratamento de erro atual.
+- [x] Adicionar teste de runtime que comprove a ordem visual: reconhecimento facial bem-sucedido abre a senha; falha biométrica não a exibe.

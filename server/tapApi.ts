@@ -18,10 +18,12 @@ type StoredResponse = { status: number; body: Record<string, unknown> };
 const state: {
   session: TapSession | null;
   idempotentResponses: Map<string, StoredResponse>;
+  faceTokens: Map<string, { userId: string; createdAt: number }>;
   latestHeartbeat: number | null;
 } = {
   session: null,
   idempotentResponses: new Map(),
+  faceTokens: new Map(),
   latestHeartbeat: null,
 };
 
@@ -72,6 +74,7 @@ function remember(key: string, status: number, body: Record<string, unknown>) {
 export function resetTapSimulator() {
   state.session = null;
   state.idempotentResponses.clear();
+  state.faceTokens.clear();
   state.latestHeartbeat = null;
 }
 
@@ -210,9 +213,23 @@ export function registerTapApi(app: Express) {
     if (!validateTotem(req, res, tapId)) return;
     const key = idempotencyKey(req, res);
     if (!key || cachedResponse(res, key)) return;
-    const { pin, face_image_base64, nonce } = req.body ?? {};
-    if (!pin || !face_image_base64 || !nonce) {
-      return jsonError(res, 422, "MISSING_IDENTITY_DATA", "PIN, imagem facial e nonce são obrigatórios.");
+    const { phase, pin, face_image_base64, face_token, nonce } = req.body ?? {};
+    if (phase === "recognize") {
+      if (!face_image_base64 || !nonce) return jsonError(res, 422, "MISSING_FACE_DATA", "Imagem facial e nonce são obrigatórios.");
+      if (face_image_base64 === "face-not-recognized") {
+        const body = { recognized: false, reason: "FACE_NOT_RECOGNIZED" };
+        remember(key, 200, body);
+        return res.json(body);
+      }
+      const token = `face-${Date.now()}-${String(nonce).slice(0, 12)}`;
+      state.faceTokens.set(token, { userId: "demo-wallet-user", createdAt: Math.floor(Date.now() / 1000) });
+      const body = { recognized: true, face_token: token, user_id: "demo-wallet-user", match_score: 0.98 };
+      remember(key, 200, body);
+      return res.json(body);
+    }
+    const recognizedFace = phase === "authorize" ? state.faceTokens.get(String(face_token)) : null;
+    if (!pin || !nonce || (phase === "authorize" && !recognizedFace) || (!phase && !face_image_base64)) {
+      return jsonError(res, 422, "MISSING_IDENTITY_DATA", "PIN, reconhecimento facial e nonce são obrigatórios.");
     }
     // Simulador: esta condição existe apenas para validar a integração local. A decisão biométrica real pertence ao backend da Wallet.
     if (pin !== "1234") {
@@ -220,7 +237,7 @@ export function registerTapApi(app: Express) {
       remember(key, 200, body);
       return res.json(body);
     }
-    const body = { authorized: true, session_id: `wallet-${Date.now()}`, user_id: "demo-wallet-user", max_value_cents: 10000, max_volume_ml: 1000, match_score: 0.98 };
+    const body = { authorized: true, session_id: `wallet-${Date.now()}`, user_id: recognizedFace?.userId ?? "demo-wallet-user", max_value_cents: 10000, max_volume_ml: 1000, match_score: 0.98 };
     remember(key, 200, body);
     return res.json(body);
   });

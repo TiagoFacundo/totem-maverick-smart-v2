@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { CardDetails, Face, Header, Idle, Notice, Pouring } from "./Home";
+import { CardDetails, Face, FacePassword, Header, Idle, Notice, Pouring } from "./Home";
 
 const projectRoot = process.cwd();
 const homeSource = readFileSync(resolve(projectRoot, "client/src/pages/Home.tsx"), "utf8");
@@ -20,14 +20,15 @@ describe("interface vertical de 7 polegadas", () => {
     const screens = createElement("div", null,
       createElement(Idle, { qrValue: "wallet://demo", seconds: 30, onFace: noop, onCard: noop, onDev: noop }),
       createElement(Face, { active: false, onActivate: noop, onCancel: noop }),
+      createElement(FacePassword, { password: "", submitting: false, setPassword: noop, onCancel: noop, onContinue: noop }),
       createElement(CardDetails, { name: "Cliente", cpf: "12345678901", birth: "01/01/1990", setName: noop, setCpf: noop, setBirth: noop, onCancel: noop, onContinue: noop }),
-      createElement(Pouring, { sessionId: "session-01", poured: 100, onFinish: noop, onEmergency: noop }),
+      createElement(Pouring, { sessionId: "session-01", poured: 100, maxValueCents: 5000, onFinish: noop, onEmergency: noop }),
       createElement(Notice, { state: "offline", onReset: noop }),
       createElement(Notice, { state: "error", onReset: noop }),
     );
     const markup = renderToStaticMarkup(screens);
     const targets = Array.from(markup.matchAll(/data-touch-target="(\d+)"/g), match => Number(match[1]));
-    expect(targets).toHaveLength(14);
+    expect(targets).toHaveLength(17);
     expect(targets.every(target => target >= 48)).toBe(true);
   });
 
@@ -46,5 +47,7 @@ describe("interface vertical de 7 polegadas", () => {
     expect(homeSource).toContain('if (screen !== "idle") return;');
     expect(homeSource).toContain("getIdlePourTransition(command)");
     expect(homeSource).toContain("setScreen(transition.screen)");
+    expect(homeSource).toContain('await recognizeFace(tapApi, { face_image_base64: "simulated-face-capture", nonce');
+    expect(homeSource).toContain('if (!recognition) { reset(); return; }');
   });
 });
