@@ -66,8 +66,10 @@ describe("runtime do fluxo de Face ID", () => {
     await user.click(screen.getByRole("button", { name: "Continuar" }));
 
     expect(await screen.findByRole("heading", { name: "Servindo seu chopp" })).not.toBeNull();
-    expect(tapMocks.open).toHaveBeenCalledWith(expect.objectContaining({ max_volume_ml: 650, max_value_cents: 7250, customer_id: "cliente-runtime" }), expect.any(String));
+    await waitFor(() => expect(tapMocks.open).toHaveBeenCalledWith(expect.objectContaining({ max_volume_ml: 650, max_value_cents: 7250, customer_id: "cliente-runtime" }), expect.any(String)));
     expect(screen.getByText("#wallet-s")).not.toBeNull();
+    expect(screen.queryByRole("button", { name: /usar face id/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /simular escaneamento/i })).toBeNull();
   });
 
   it("preserva os caminhos de QR Code e cartão após o ajuste de Face ID", async () => {
@@ -83,6 +85,23 @@ describe("runtime do fluxo de Face ID", () => {
     render(createElement(Home));
     await user.click(screen.getByRole("button", { name: /comprar com cartão/i }));
     expect(await screen.findByRole("heading", { name: "Seus dados" })).not.toBeNull();
+  });
+
+  it("mantém a etapa de senha quando o servidor não aprova a retirada", async () => {
+    tapMocks.authorizeFace
+      .mockResolvedValueOnce({ recognized: true, face_token: "face-token-pending", user_id: "cliente-runtime" })
+      .mockResolvedValueOnce({ authorized: false, reason: "INVALID_PIN" });
+    const user = userEvent.setup();
+    render(createElement(Home));
+
+    await user.click(screen.getByRole("button", { name: /usar face id/i }));
+    await user.click(screen.getByRole("button", { name: "Iniciar captura facial" }));
+    await user.type(await screen.findByLabelText("Senha da Wallet"), "senha-incorreta");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+
+    expect(await screen.findByRole("alert")).not.toBeNull();
+    expect(screen.getByRole("heading", { name: "Informe sua senha" })).not.toBeNull();
+    expect(screen.queryByRole("button", { name: /usar face id/i })).toBeNull();
   });
 
   it("não exibe a senha e retorna ao tratamento inicial quando a biometria falha", async () => {

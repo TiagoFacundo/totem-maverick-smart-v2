@@ -42,8 +42,8 @@ export function Face({ active, onActivate, onCancel }: { active: boolean; onActi
   return <main className="ref-centered"><div className="eyebrow">FACE ID</div><h1>Captura facial</h1><button data-touch-target="150" className={`face-orbit ${active ? "active" : ""}`} onClick={onActivate} aria-label="Iniciar captura facial"><Fingerprint /></button><p>{active ? "Validando identidade..." : "Posicione seu rosto dentro do círculo"}</p><button data-touch-target="48" className="danger-button" onClick={onCancel}>Cancelar</button></main>;
 }
 
-export function FacePassword({ password, submitting, setPassword, onCancel, onContinue }: { password: string; submitting: boolean; setPassword: (value: string) => void; onCancel: () => void; onContinue: () => void }) {
-  return <main className="ref-centered ref-form"><div className="eyebrow">FACE ID CONFIRMADO</div><h1>Informe sua senha</h1><p>Digite a senha cadastrada na Wallet para continuar.</p><div className="fields"><input data-touch-target="48" type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder="Senha" autoComplete="current-password" inputMode="numeric" aria-label="Senha da Wallet" /></div><div className="form-actions"><button data-touch-target="48" className="neutral-button" onClick={onCancel} disabled={submitting}>Cancelar</button><button data-touch-target="48" className="teal-action" onClick={onContinue} disabled={!password || submitting}>{submitting ? "Validando..." : "Continuar"}</button></div></main>;
+export function FacePassword({ password, submitting, error, setPassword, onCancel, onContinue }: { password: string; submitting: boolean; error: string; setPassword: (value: string) => void; onCancel: () => void; onContinue: () => void }) {
+  return <main className="ref-centered ref-form"><div className="eyebrow">FACE ID CONFIRMADO</div><h1>Informe sua senha</h1><p>Digite a senha cadastrada na Wallet para continuar.</p><div className="fields"><input data-touch-target="48" type="password" value={password} onChange={event => setPassword(event.target.value)} placeholder="Senha" autoComplete="current-password" inputMode="numeric" aria-label="Senha da Wallet" /></div>{error && <p role="alert" className="form-error">{error}</p>}<div className="form-actions"><button data-touch-target="48" className="neutral-button" onClick={onCancel} disabled={submitting}>Cancelar</button><button data-touch-target="48" className="teal-action" onClick={onContinue} disabled={!password || submitting}>{submitting ? "Validando..." : "Continuar"}</button></div></main>;
 }
 
 export function CardDetails({ name, cpf, birth, setName, setCpf, setBirth, onCancel, onContinue }: { name: string; cpf: string; birth: string; setName: (value: string) => void; setCpf: (value: string) => void; setBirth: (value: string) => void; onCancel: () => void; onContinue: () => void }) {
@@ -70,6 +70,7 @@ export default function Home() {
   const [faceActive, setFaceActive] = useState(false);
   const [facePassword, setFacePassword] = useState("");
   const [facePasswordSubmitting, setFacePasswordSubmitting] = useState(false);
+  const [facePasswordError, setFacePasswordError] = useState("");
   const [faceToken, setFaceToken] = useState("");
   const [name, setName] = useState(""); const [cpf, setCpf] = useState(""); const [birth, setBirth] = useState("");
   const [sessionId, setSessionId] = useState(""); const [poured, setPoured] = useState(0);
@@ -81,7 +82,7 @@ export default function Home() {
 
   const reset = useCallback(() => {
     finishing.current = false;
-    setScreen("idle"); setNonce(createNonce()); setSeconds(30); setPoured(0); setSessionId(""); setFaceActive(false); setFacePassword(""); setFacePasswordSubmitting(false); setFaceToken(""); setMaxVolumeMl(0); setMaxValueCents(0);
+    setScreen("idle"); setNonce(createNonce()); setSeconds(30); setPoured(0); setSessionId(""); setFaceActive(false); setFacePassword(""); setFacePasswordSubmitting(false); setFacePasswordError(""); setFaceToken(""); setMaxVolumeMl(0); setMaxValueCents(0);
   }, []);
 
   const finish = useCallback(async (error = false) => {
@@ -121,6 +122,7 @@ export default function Home() {
       const recognition = await recognizeFace(tapApi, { face_image_base64: "simulated-face-capture", nonce, timestamp: Math.floor(Date.now() / 1000) });
       if (!recognition) { reset(); return; }
       setFaceToken(recognition.faceToken);
+      setFacePasswordError("");
       setScreen("face-password");
     } catch { setScreen("offline"); } finally { setFaceActive(false); }
   };
@@ -130,7 +132,7 @@ export default function Home() {
     const authorizationResult: { limits: { authorizationSessionId: string; maxVolumeMl: number; maxValueCents: number } | null } = { limits: null };
     try {
       const authorized = await authorizeFaceThenRequestPour(tapApi, { phase: "authorize", pin: facePassword, face_token: faceToken, nonce, timestamp: Math.floor(Date.now() / 1000) }, async limits => { authorizationResult.limits = limits; await requestAuthorizedPour(tapApi, limits.authorizationSessionId, PRODUCT, limits); });
-      if (!authorized || !authorizationResult.limits) { reset(); return; }
+      if (!authorized || !authorizationResult.limits) { setFacePasswordError("Não foi possível validar a senha. Confira os dados e tente novamente."); return; }
       setSessionId(authorizationResult.limits.authorizationSessionId);
       setMaxVolumeMl(authorizationResult.limits.maxVolumeMl);
       setMaxValueCents(authorizationResult.limits.maxValueCents);
@@ -143,7 +145,7 @@ export default function Home() {
   return <div className="kiosk-app"><div className="kiosk-stage"><Header offline={!isOnline || screen === "offline"} />
     {screen === "idle" && <Idle qrValue={qrValue} seconds={seconds} onFace={() => setScreen("face")} onCard={() => setScreen("card")} onDev={activateWalletQr} />}
     {screen === "face" && <Face active={faceActive} onActivate={activateFace} onCancel={reset} />}
-    {screen === "face-password" && <FacePassword password={facePassword} submitting={facePasswordSubmitting} setPassword={setFacePassword} onCancel={reset} onContinue={submitFacePassword} />}
+    {screen === "face-password" && <FacePassword password={facePassword} submitting={facePasswordSubmitting} error={facePasswordError} setPassword={setFacePassword} onCancel={reset} onContinue={submitFacePassword} />}
     {screen === "card" && <CardDetails name={name} cpf={cpf} birth={birth} setName={setName} setCpf={setCpf} setBirth={setBirth} onCancel={reset} onContinue={requestServerAuthorization} />}
     {screen === "pouring" && <Pouring sessionId={sessionId} poured={poured} maxValueCents={maxValueCents} onFinish={() => void finish()} onEmergency={emergency} />}
     {screen === "completed" && <Completed poured={poured} />}

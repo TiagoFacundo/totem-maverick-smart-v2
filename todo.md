@@ -59,3 +59,7 @@
 - [x] Testar em runtime que Face ID autorizado apresenta a tela de dispensação sem alterar QR Code ou cartão.
 - [x] Propagar o `session_id` retornado pelo servidor na autorização de Face ID até a tela Servindo seu chopp.
 - [x] Adicionar testes de runtime para confirmar que QR Code e cartão permanecem inalterados após o ajuste de Face ID.
+- [x] Identificar a condição de validação que ainda direciona o Face ID aprovado para a tela inicial.
+- [x] Encaminhar a resposta aprovada após senha para a tela de retirada da bebida sem executar reset.
+- [x] Adicionar regressão de runtime para assegurar que a validação aprovada não retorna ao IDLE.
+- [x] Verificar explicitamente que, após senha aprovada, Servindo seu chopp permanece visível e controles do IDLE não reaparecem.
