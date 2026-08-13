@@ -69,3 +69,8 @@
 - [x] Inventariar os componentes, fluxos, contratos REST, agente Raspberry Pi e testes implementados.
 - [x] Redigir documentação técnica completa com arquitetura, segurança, operação e limitações atuais.
 - [x] Revisar a documentação contra o código e os testes antes da entrega.
+- [x] Mapear as rotas atuais e o conteúdo técnico que será exibido na página Docs.
+- [x] Criar uma rota Docs que apresente a documentação técnica consolidada dentro da aplicação.
+- [x] Adicionar teste de rota e renderização para a página Docs sem alterar o totem operacional.
+- [x] Incluir testes TSX de páginas na configuração do Vitest para executar a cobertura da rota Docs.
+- [x] Compatibilizar o componente de rotas com o ambiente de teste da página Docs.
