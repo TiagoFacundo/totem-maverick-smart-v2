@@ -62,7 +62,7 @@ describe("runtime do fluxo de Face ID", () => {
 
     await user.click(screen.getByRole("button", { name: /usar face id/i }));
     await user.click(screen.getByRole("button", { name: "Iniciar captura facial" }));
-    await user.type(await screen.findByLabelText("Senha da Wallet"), "1234");
+    await user.type(await screen.findByLabelText("Senha da Wallet"), "250712");
     await user.click(screen.getByRole("button", { name: "Continuar" }));
 
     expect(await screen.findByRole("heading", { name: "Servindo seu chopp" })).not.toBeNull();

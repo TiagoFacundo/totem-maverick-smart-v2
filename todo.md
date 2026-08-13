@@ -63,3 +63,6 @@
 - [x] Encaminhar a resposta aprovada após senha para a tela de retirada da bebida sem executar reset.
 - [x] Adicionar regressão de runtime para assegurar que a validação aprovada não retorna ao IDLE.
 - [x] Verificar explicitamente que, após senha aprovada, Servindo seu chopp permanece visível e controles do IDLE não reaparecem.
+- [x] Localizar a senha de teste usada pelo simulador Face ID e pelos cenários de autorização.
+- [x] Alterar a senha de teste do Face ID para 250712 sem modificar regras de autorização.
+- [x] Validar a nova senha de teste e a transição para Servindo seu chopp.

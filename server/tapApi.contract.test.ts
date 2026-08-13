@@ -78,7 +78,7 @@ describe("contrato REST da torneira", () => {
     const identity = await fetch(`${baseUrl}/api/public/tap/TORNEIRA_01/authorize/face`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Totem-ID": "TOTEM_001", "Idempotency-Key": "face-password-key-001" },
-      body: JSON.stringify({ phase: "authorize", pin: "1234", face_token: face.face_token, nonce: "face-nonce-001" }),
+      body: JSON.stringify({ phase: "authorize", pin: "250712", face_token: face.face_token, nonce: "face-nonce-001" }),
     });
     expect(identity.status).toBe(200);
     const authorization = await identity.json() as { authorized: boolean; user_id: string; max_value_cents: number; max_volume_ml: number };

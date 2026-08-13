@@ -232,7 +232,7 @@ export function registerTapApi(app: Express) {
       return jsonError(res, 422, "MISSING_IDENTITY_DATA", "PIN, reconhecimento facial e nonce são obrigatórios.");
     }
     // Simulador: esta condição existe apenas para validar a integração local. A decisão biométrica real pertence ao backend da Wallet.
-    if (pin !== "1234") {
+    if (pin !== "250712") {
       const body = { authorized: false, reason: "INVALID_PIN" };
       remember(key, 200, body);
       return res.json(body);
