@@ -1,13 +1,14 @@
 import { QRCodeSVG } from "qrcode.react";
-import React, { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { Beer, Check, CircleAlert, CircleCheck, CreditCard, Fingerprint, Gift, LoaderCircle, Radio, ShieldCheck, Wifi, WifiOff, X } from "lucide-react";
-import { TAP_ID, TOTEM_ID, calculateValueCents, createNonce, createSessionId, formatCurrency, type TotemState } from "../../../shared/totem";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Check, CircleAlert, CreditCard, Fingerprint, Gift, Radio, Wifi, WifiOff } from "lucide-react";
+import { TAP_ID, TOTEM_ID, calculateValueCents, createNonce, createSessionId, formatCurrency } from "../../../shared/totem";
 import { flushPendingFinished, queuePendingFinished, tapApi } from "@/lib/tapApi";
+import { getIdlePourTransition, requestAuthorizedPour, authorizeFaceThenRequestPour, authorizeWalletQrThenRequestPour } from "@/lib/totemAuthorization";
 
 const LOGO_URL = "/manus-storage/maverick-reference-logo_09b4ddb1.png";
 const PRODUCT = { name: "Heineken Lager", style: "Lager Pilsen", brand: "Heineken", pricePer100mlCents: 349, abv: "5,0%", ibu: "5,5", pricePerLiter: "R$ 34,90" };
 
-type Screen = "idle" | "face" | "card" | "confirming" | "authorized" | "pouring" | "finishing" | "completed" | "offline" | "error";
+type Screen = "idle" | "face" | "card" | "pouring" | "completed" | "offline" | "error";
 
 export function Header({ offline = false }: { offline?: boolean }) {
   return <header className="ref-header"><img className="ref-logo" src={LOGO_URL} alt="Maverick Smart Tap" /><div className={offline ? "connection offline" : "connection"}>{offline ? <WifiOff /> : <Wifi />}</div></header>;
@@ -45,30 +46,6 @@ export function CardDetails({ name, cpf, birth, setName, setCpf, setBirth, onCan
   return <main className="ref-centered ref-form"><div className="eyebrow">COMPRA COM CARTÃO</div><h1>Seus dados</h1><div className="fields"><input data-touch-target="48" value={name} onChange={event => setName(event.target.value)} placeholder="Nome completo" autoComplete="name" /><input data-touch-target="48" value={cpf} onChange={event => setCpf(event.target.value)} placeholder="CPF" inputMode="numeric" /><input data-touch-target="48" value={birth} onChange={event => setBirth(event.target.value)} placeholder="Data de nascimento (DD/MM/AAAA)" inputMode="numeric" /></div><div className="form-actions"><button data-touch-target="48" className="neutral-button" onClick={onCancel}>Cancelar</button><button data-touch-target="48" className="teal-action" disabled={!name || cpf.replace(/\D/g, "").length < 11 || birth.length < 8} onClick={onContinue}>Continuar</button></div></main>;
 }
 
-export function HoldConfirm({ onComplete }: { onComplete: () => void }) {
-  const [progress, setProgress] = useState(0);
-  const frame = useRef<number | null>(null);
-  const started = useRef(0);
-  const done = useRef(false);
-  const stop = () => { if (frame.current) cancelAnimationFrame(frame.current); frame.current = null; if (!done.current) setProgress(0); };
-  const start = () => {
-    if (frame.current) return;
-    done.current = false; started.current = performance.now();
-    const tick = (now: number) => { const value = Math.min(100, ((now - started.current) / 1300) * 100); setProgress(value); if (value === 100) { done.current = true; frame.current = null; onComplete(); return; } frame.current = requestAnimationFrame(tick); };
-    frame.current = requestAnimationFrame(tick);
-  };
-  useEffect(() => () => stop(), []);
-  return <button data-touch-target="48" className="hold-button" onPointerDown={start} onPointerUp={stop} onPointerLeave={stop} onPointerCancel={stop}><i style={{ width: `${progress}%` }} />{progress ? `Confirmando ${Math.ceil(progress)}%` : "Pressione e segure para confirmar"}</button>;
-}
-
-export function Confirming({ onConfirm, onCancel }: { onConfirm: () => void; onCancel: () => void }) {
-  return <main className="ref-centered"><div className="eyebrow">CONFIRMAÇÃO</div><h1>Confirmar autorização</h1><p className="confirmation-copy">A Wallet será autorizada para até R$ 50,00. O valor final é calculado pelo volume servido.</p><HoldConfirm onComplete={onConfirm} /><button data-touch-target="48" className="text-action" onClick={onCancel}>Cancelar</button></main>;
-}
-
-function Authorizing() {
-  return <main className="ref-centered"><LoaderCircle className="ref-spinner" /><h1>Aguardando autorização</h1><p>Validando saldo na sua Wallet...</p></main>;
-}
-
 export function Pouring({ sessionId, poured, onFinish, onEmergency }: { sessionId: string; poured: number; onFinish: () => void; onEmergency: () => void }) {
   return <main className="ref-centered ref-pouring"><div className="eyebrow">SESSÃO ATIVA</div><h1>Servindo seu chopp</h1><p className="session-code">#{sessionId.slice(0, 8)}</p><div className="session-values"><Metric label="Volume" value={`${Math.round(poured)} ml`} /><Metric label="Total" value={formatCurrency(calculateValueCents(poured, PRODUCT.pricePer100mlCents))} /></div><div className="limit-line"><span>Limite autorizado</span><strong>R$ 50,00</strong></div><button data-touch-target="48" className="danger-button" onClick={onFinish}>Encerrar agora</button><button data-touch-target="48" className="flow-status" onClick={onEmergency}><Radio /> Fluxo ativo</button></main>;
 }
@@ -96,23 +73,35 @@ export default function Home() {
   const reset = () => { finishing.current = false; setScreen("idle"); setNonce(createNonce()); setSeconds(30); setPoured(0); setSessionId(""); setFaceActive(false); };
   useEffect(() => { const id = window.setInterval(() => setSeconds(current => { if (current <= 1) { setNonce(createNonce()); return 30; } return current - 1; }), 1000); return () => window.clearInterval(id); }, []);
   useEffect(() => { const online = () => { setIsOnline(true); flushPendingFinished(); if (screen === "offline") reset(); }; const offline = () => { setIsOnline(false); if (!["idle", "completed", "error"].includes(screen)) setScreen("offline"); }; window.addEventListener("online", online); window.addEventListener("offline", offline); flushPendingFinished(); return () => { window.removeEventListener("online", online); window.removeEventListener("offline", offline); }; }, [screen]);
+  useEffect(() => {
+    if (screen !== "idle") return;
+    const pollAuthorization = () => tapApi.getCommand().then(command => {
+      const transition = getIdlePourTransition(command);
+      if (transition) {
+        setSessionId(transition.sessionId);
+        setPoured(0);
+        setScreen(transition.screen);
+      }
+    }).catch(() => setIsOnline(false));
+    pollAuthorization();
+    const poll = window.setInterval(pollAuthorization, 1500);
+    return () => window.clearInterval(poll);
+  }, [screen]);
   useEffect(() => { if (screen !== "pouring") return; const poll = window.setInterval(() => tapApi.getCommand().then(command => { if (command.command?.type === "emergency_stop") setScreen("error"); }).catch(() => setScreen("offline")), 1500); return () => window.clearInterval(poll); }, [screen]);
   useEffect(() => { if (screen !== "pouring") return; const flow = window.setInterval(() => setPoured(current => Math.min(450, current + 1.5)), 200); return () => window.clearInterval(flow); }, [screen]);
   useEffect(() => { if (screen !== "completed") return; const id = window.setTimeout(reset, 4000); return () => window.clearTimeout(id); }, [screen]);
 
-  const authorize = async () => { const id = createSessionId(); setSessionId(id); setScreen("authorized"); try { await tapApi.open({ session_id: id, command: "open", max_volume_ml: 500, max_value_cents: 5000, timeout_sec: 90, product: { name: PRODUCT.name, price_per_100ml_cents: PRODUCT.pricePer100mlCents } }, `${id}-open`); window.setTimeout(() => setScreen("pouring"), 1100); } catch { setScreen("offline"); } };
-  const activateFace = async () => { if (faceActive) return; setFaceActive(true); try { await tapApi.authorizeFace({ pin: "1234", face_image_base64: "simulator", nonce, timestamp: Math.floor(Date.now() / 1000) }); window.setTimeout(() => setScreen("confirming"), 900); } catch { setScreen("offline"); } };
-  const finish = async (error = false) => { if (finishing.current || !sessionId) return; finishing.current = true; setScreen("finishing"); const payload = { session_id: sessionId, status: error ? "error" : "finished", volume_poured_ml: Math.round(poured), value_cents: calculateValueCents(poured, PRODUCT.pricePer100mlCents) }; const key = `${sessionId}-finished`; try { await tapApi.finished(payload, key); setScreen(error ? "error" : "completed"); } catch { queuePendingFinished(payload, key); setScreen("offline"); } finally { finishing.current = false; } };
+  const requestServerAuthorization = async () => { const id = createSessionId(); try { await requestAuthorizedPour(tapApi, id, PRODUCT); reset(); } catch { setScreen("offline"); } };
+  const activateFace = async () => { if (faceActive) return; setFaceActive(true); try { const authorized = await authorizeFaceThenRequestPour(tapApi, { pin: "1234", face_image_base64: "simulator", nonce, timestamp: Math.floor(Date.now() / 1000) }, requestServerAuthorization); if (!authorized) reset(); } catch { setScreen("offline"); } };
+  const activateWalletQr = async () => { try { const authorized = await authorizeWalletQrThenRequestPour(tapApi, { qr_payload: qrValue, nonce, timestamp: Math.floor(Date.now() / 1000) }, requestServerAuthorization); if (!authorized) reset(); } catch { setScreen("offline"); } };
+  const finish = async (error = false) => { if (finishing.current || !sessionId) return; finishing.current = true; const payload = { session_id: sessionId, status: error ? "error" : "finished", volume_poured_ml: Math.round(poured), value_cents: calculateValueCents(poured, PRODUCT.pricePer100mlCents) }; const key = `${sessionId}-finished`; try { await tapApi.finished(payload, key); setScreen(error ? "error" : "completed"); } catch { queuePendingFinished(payload, key); setScreen("offline"); } finally { finishing.current = false; } };
   const emergency = async () => { try { await tapApi.emergencyStop(); } catch { /* proteção local continua ativa */ } finish(true); };
 
   return <div className="kiosk-app"><div className="kiosk-stage"><Header offline={!isOnline || screen === "offline"} />
-    {screen === "idle" && <Idle qrValue={qrValue} seconds={seconds} onFace={() => setScreen("face")} onCard={() => setScreen("card")} onDev={() => setScreen("confirming")} />}
+    {screen === "idle" && <Idle qrValue={qrValue} seconds={seconds} onFace={() => setScreen("face")} onCard={() => setScreen("card")} onDev={activateWalletQr} />}
     {screen === "face" && <Face active={faceActive} onActivate={activateFace} onCancel={reset} />}
-    {screen === "card" && <CardDetails name={name} cpf={cpf} birth={birth} setName={setName} setCpf={setCpf} setBirth={setBirth} onCancel={reset} onContinue={() => setScreen("confirming")} />}
-    {screen === "confirming" && <Confirming onConfirm={authorize} onCancel={reset} />}
-    {screen === "authorized" && <Authorizing />}
+    {screen === "card" && <CardDetails name={name} cpf={cpf} birth={birth} setName={setName} setCpf={setCpf} setBirth={setBirth} onCancel={reset} onContinue={requestServerAuthorization} />}
     {screen === "pouring" && <Pouring sessionId={sessionId} poured={poured} onFinish={() => finish()} onEmergency={emergency} />}
-    {screen === "finishing" && <Authorizing />}
     {screen === "completed" && <Completed poured={poured} />}
     {(screen === "offline" || screen === "error") && <Notice state={screen} onReset={reset} />}
     <Footer /></div></div>;

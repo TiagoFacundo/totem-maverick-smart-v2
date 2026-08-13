@@ -36,3 +36,13 @@
 - [x] Documentar a ligação segura entre Raspberry Pi, módulo relé, fonte e solenoide antes da operação física.
 - [x] Garantir que retirada de comando durante dispensação resulte em desligamento físico e `POST /finished` idempotente.
 - [x] Documentar a necessidade de parada de emergência física normalmente fechada no circuito de potência da válvula.
+- [x] Identificar os componentes, estados e transições usados exclusivamente pela tela de confirmação/autorização do Totem.
+- [x] Remover somente a tela de confirmação/autorização e sua navegação exclusiva, sem alterar contratos REST, APIs, banco, solenoide ou demais layouts.
+- [x] Fazer o Totem aguardar a autorização do servidor e iniciar automaticamente o fluxo de dispensação existente quando o comando chegar.
+- [x] Executar testes de regressão para confirmar que QR Code, Face ID, cartão, comunicação e controle de dispensação foram preservados.
+- [x] Adicionar testes explícitos para os fluxos de QR Code, Face ID e cartão sem a tela de confirmação.
+- [x] Adicionar teste de integração para a transição automática de autorização do servidor para dispensação.
+- [x] Extrair e testar o controlador de autorização de cartão, Face ID e QR da Wallet sem depender de tela de confirmação.
+- [x] Testar o polling do controlador com `start_pour` do servidor e a transição automática para dispensação.
+- [x] Conectar a ação de leitura simulada do QR da Wallet ao controlador real de autorização antes da abertura da sessão.
+- [x] Extrair e testar a decisão de transição do estado IDLE para POURING usada pelo fluxo principal ao receber `start_pour`.
