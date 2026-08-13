@@ -281,7 +281,7 @@ O token facial em memória do simulador não é persistido e a captura facial de
 
 ## 10. Testes e validações executadas
 
-A suíte atual contém **8 arquivos de teste e 27 testes aprovados** na última validação local. Ela cobre contrato REST, idempotência, proteção de headers, controle do agente, retry, filas pendentes, interface, alvos de toque e os fluxos Face ID/QR/cartão.[9] [10] [11] [12]
+A suíte atual contém **9 arquivos de teste e 28 testes aprovados** na última validação local. Ela cobre contrato REST, idempotência, proteção de headers, controle do agente, retry, filas pendentes, interface, alvos de toque, os fluxos Face ID/QR/cartão e a rota de documentação.[9] [10] [11] [12] [13]
 
 | Arquivo | Cobertura principal |
 |---|---|
@@ -293,6 +293,7 @@ A suíte atual contém **8 arquivos de teste e 27 testes aprovados** na última 
 | `client/src/pages/Home.flow.test.ts` | Decisões de fluxo e autorização |
 | `client/src/pages/Home.interface.test.ts` | Interface, touch targets, ausência da confirmação legada |
 | `client/src/pages/Home.face-runtime.test.ts` | Runtime do Face ID, senha, transição para retirada e regressões QR/cartão |
+| `client/src/pages/Docs.test.tsx` | Renderização da rota `/docs` sem carregar o kiosk |
 
 Os comandos de validação são:
 
@@ -342,3 +343,4 @@ pnpm test
 [10]: ../client/src/pages/Home.face-runtime.test.ts "Testes de runtime do Face ID"
 [11]: ../client/src/pages/Home.flow.test.ts "Testes de fluxo"
 [12]: ../client/src/pages/Home.interface.test.ts "Testes de interface"
+[13]: ../client/src/pages/Docs.test.tsx "Teste da rota Docs"
