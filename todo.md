@@ -54,3 +54,8 @@
 - [x] Implementar uma validação explícita de sucesso ou falha biométrica antes da tela de senha, sem usar temporizador como autorização.
 - [x] Adicionar teste de falha biométrica que impeça a exibição da senha e preserve o tratamento de erro atual.
 - [x] Adicionar teste de runtime que comprove a ordem visual: reconhecimento facial bem-sucedido abre a senha; falha biométrica não a exibe.
+- [x] Mapear a transição pós-autorização do Face ID e identificar por que a tela de dispensação não é exibida imediatamente.
+- [x] Encaminhar o Face ID autorizado para a tela Servindo seu chopp com sessão e limites retornados pelo servidor.
+- [x] Testar em runtime que Face ID autorizado apresenta a tela de dispensação sem alterar QR Code ou cartão.
+- [x] Propagar o `session_id` retornado pelo servidor na autorização de Face ID até a tela Servindo seu chopp.
+- [x] Adicionar testes de runtime para confirmar que QR Code e cartão permanecem inalterados após o ajuste de Face ID.

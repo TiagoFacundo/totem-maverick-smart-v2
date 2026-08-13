@@ -127,10 +127,15 @@ export default function Home() {
   const submitFacePassword = async () => {
     if (!facePassword || !faceToken || facePasswordSubmitting) return;
     setFacePasswordSubmitting(true);
-    const id = createSessionId();
+    const authorizationResult: { limits: { authorizationSessionId: string; maxVolumeMl: number; maxValueCents: number } | null } = { limits: null };
     try {
-      const authorized = await authorizeFaceThenRequestPour(tapApi, { phase: "authorize", pin: facePassword, face_token: faceToken, nonce, timestamp: Math.floor(Date.now() / 1000) }, async limits => { await requestAuthorizedPour(tapApi, id, PRODUCT, limits); });
-      reset();
+      const authorized = await authorizeFaceThenRequestPour(tapApi, { phase: "authorize", pin: facePassword, face_token: faceToken, nonce, timestamp: Math.floor(Date.now() / 1000) }, async limits => { authorizationResult.limits = limits; await requestAuthorizedPour(tapApi, limits.authorizationSessionId, PRODUCT, limits); });
+      if (!authorized || !authorizationResult.limits) { reset(); return; }
+      setSessionId(authorizationResult.limits.authorizationSessionId);
+      setMaxVolumeMl(authorizationResult.limits.maxVolumeMl);
+      setMaxValueCents(authorizationResult.limits.maxValueCents);
+      setPoured(0);
+      setScreen("pouring");
     } catch { setScreen("offline"); } finally { setFacePasswordSubmitting(false); }
   };
   const activateWalletQr = async () => { try { const authorized = await authorizeWalletQrThenRequestPour(tapApi, { qr_payload: qrValue, nonce, timestamp: Math.floor(Date.now() / 1000) }, requestServerAuthorization); if (!authorized) reset(); } catch { setScreen("offline"); } };
