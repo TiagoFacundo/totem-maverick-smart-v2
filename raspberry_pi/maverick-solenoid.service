@@ -1,0 +1,18 @@
+[Unit]
+Description=Maverick Smart Tap - Agente de Solenoide
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=maverick
+WorkingDirectory=/opt/maverick-tap
+EnvironmentFile=/etc/maverick-tap/solenoid.env
+ExecStart=/usr/bin/python3 /opt/maverick-tap/solenoid_agent.py
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

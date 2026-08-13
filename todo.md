@@ -31,3 +31,8 @@
 - [x] Criar testes de renderização que cubram todos os controles reconstruídos e seus alvos mínimos de toque.
 - [x] Criar teste de renderização que confirme a classe visual offline do cabeçalho no estado IDLE.
 - [x] Reconstruir a tela inicial, Face ID, cadastro de cartão, autorização, sessão ativa e encerramento no padrão visual compacto da referência.
+- [x] Mapear e apresentar o fluxo REST existente que autoriza, inicia e encerra a dispensação.
+- [x] Criar um agente Raspberry Pi com GPIO, fail-safe, polling de comando e encerramento idempotente.
+- [x] Documentar a ligação segura entre Raspberry Pi, módulo relé, fonte e solenoide antes da operação física.
+- [x] Garantir que retirada de comando durante dispensação resulte em desligamento físico e `POST /finished` idempotente.
+- [x] Documentar a necessidade de parada de emergência física normalmente fechada no circuito de potência da válvula.
