@@ -98,6 +98,12 @@ export default function Home() {
   const emergency = useCallback(async () => { try { await tapApi.emergencyStop(); } catch { /* proteção local continua ativa */ } void finish(true); }, [finish]);
 
   useEffect(() => { const id = window.setInterval(() => setSeconds(current => { if (current <= 1) { setNonce(createNonce()); return 30; } return current - 1; }), 1000); return () => window.clearInterval(id); }, []);
+  useEffect(() => {
+    const checkConnection = () => tapApi.heartbeat().then(() => setIsOnline(true)).catch(() => setIsOnline(false));
+    checkConnection();
+    const heartbeat = window.setInterval(checkConnection, 15000);
+    return () => window.clearInterval(heartbeat);
+  }, []);
   useEffect(() => { const online = () => { setIsOnline(true); flushPendingFinished(); if (screen === "offline") reset(); }; const offline = () => { setIsOnline(false); if (!["idle", "completed", "error"].includes(screen)) setScreen("offline"); }; window.addEventListener("online", online); window.addEventListener("offline", offline); flushPendingFinished(); return () => { window.removeEventListener("online", online); window.removeEventListener("offline", offline); }; }, [reset, screen]);
   useEffect(() => {
     if (screen !== "idle") return;

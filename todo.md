@@ -84,3 +84,4 @@
 - [x] Definir as conexões seguras de Raspberry Pi, relé/driver, sensor de fluxo, fonte e válvula para o diagrama de protoboard.
 - [x] Criar uma imagem técnica de referência da ligação em protoboard com proteção elétrica e E-stop físico.
 - [x] Revisar a legibilidade do diagrama e registrar suas limitações de segurança antes da entrega.
+- [x] Integrar heartbeat periódico do totem e refletir falhas de comunicação no indicador offline da tela IDLE.

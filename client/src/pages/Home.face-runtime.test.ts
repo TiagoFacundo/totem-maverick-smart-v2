@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const tapMocks = vi.hoisted(() => ({
   authorizeQr: vi.fn(),
   authorizeFace: vi.fn(),
+  heartbeat: vi.fn(),
   getCommand: vi.fn(),
   open: vi.fn(),
   finished: vi.fn(),
@@ -17,6 +18,7 @@ vi.mock("@/lib/tapApi", () => ({
   tapApi: {
     authorizeQr: tapMocks.authorizeQr,
     authorizeFace: tapMocks.authorizeFace,
+    heartbeat: tapMocks.heartbeat,
     getCommand: tapMocks.getCommand,
     open: tapMocks.open,
     finished: tapMocks.finished,
@@ -32,6 +34,7 @@ describe("runtime do fluxo de Face ID", () => {
   beforeEach(() => {
     tapMocks.authorizeQr.mockReset().mockResolvedValue({ authorized: true });
     tapMocks.authorizeFace.mockReset();
+    tapMocks.heartbeat.mockReset().mockResolvedValue({ acknowledged: true, status: "idle" });
     tapMocks.getCommand.mockReset().mockResolvedValue({ status: "idle", command: null });
     tapMocks.open.mockReset().mockResolvedValue({ accepted: true, status: "authorized" });
     tapMocks.finished.mockReset().mockResolvedValue({ received: true, status: "finished" });
