@@ -16,7 +16,7 @@ ENV PORT=3000
 RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 COPY --from=build /app/dist ./dist
 
 RUN useradd --system --create-home --home-dir /home/maverick --shell /usr/sbin/nologin maverick \
