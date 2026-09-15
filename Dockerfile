@@ -13,8 +13,11 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
+COPY patches ./patches
+RUN pnpm install --prod --frozen-lockfile
 COPY --from=build /app/dist ./dist
-COPY --from=build /app/package.json ./package.json
 
 RUN useradd --system --create-home --home-dir /home/maverick --shell /usr/sbin/nologin maverick \
     && chown -R maverick:maverick /app
