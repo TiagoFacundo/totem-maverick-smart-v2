@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { TAP_ID, TOTEM_ID } from "../shared/totem";
+import { DEFAULT_OPERATION_CONFIG, parseQrPayload } from "../shared/totemOperation";
 
 type SessionStatus = "idle" | "authorized" | "pouring" | "finished" | "blocked" | "error" | "offline";
 
@@ -8,9 +9,10 @@ type TapSession = {
   status: SessionStatus;
   maxVolumeMl: number;
   maxValueCents: number;
-  product: { name: string; pricePer100mlCents: number };
+  product: { id: string; name: string; pricePerLiter: number; pricePer100mlCents: number };
   createdAt: number;
   finishedAt?: number;
+  operationId?: string;
 };
 
 type StoredResponse = { status: number; body: Record<string, unknown> };
@@ -20,11 +22,15 @@ const state: {
   idempotentResponses: Map<string, StoredResponse>;
   faceTokens: Map<string, { userId: string; createdAt: number }>;
   latestHeartbeat: number | null;
+  processedOperations: Set<string>;
+  operations: Array<Record<string, unknown>>;
 } = {
   session: null,
   idempotentResponses: new Map(),
   faceTokens: new Map(),
   latestHeartbeat: null,
+  processedOperations: new Set(),
+  operations: [],
 };
 
 function jsonError(res: Response, status: number, code: string, message: string) {
@@ -32,6 +38,16 @@ function jsonError(res: Response, status: number, code: string, message: string)
 }
 
 function validateTotem(req: Request, res: Response, tapId: string) {
+  const allowInsecureLocalApi = process.env.ALLOW_INSECURE_LOCAL_API === "true";
+  if (process.env.NODE_ENV === "production" && !allowInsecureLocalApi && req.protocol !== "https" && req.header("x-forwarded-proto") !== "https") {
+    jsonError(res, 400, "HTTPS_REQUIRED", "A comunicação do Totem exige HTTPS/TLS.");
+    return false;
+  }
+  const configuredToken = process.env.TOTEM_API_TOKEN;
+  if (configuredToken && req.header("Authorization") !== `Bearer ${configuredToken}`) {
+    jsonError(res, 401, "INVALID_TOTEM_CREDENTIALS", "Credencial do Totem inválida.");
+    return false;
+  }
   const totemId = req.header("X-Totem-ID");
   if (!totemId) {
     jsonError(res, 401, "MISSING_TOTEM_ID", "O cabeçalho X-Totem-ID é obrigatório.");
@@ -76,13 +92,27 @@ export function resetTapSimulator() {
   state.idempotentResponses.clear();
   state.faceTokens.clear();
   state.latestHeartbeat = null;
+  state.processedOperations.clear();
+  state.operations.length = 0;
 }
 
 export function getTapSimulatorState() {
-  return { ...state, idempotentResponses: undefined };
+  return { ...state, idempotentResponses: undefined, processedOperations: undefined };
 }
 
 export function registerTapApi(app: Express) {
+  app.get("/api/public/totem/:totemId/products", (req, res) => {
+    if (req.params.totemId !== TOTEM_ID) return jsonError(res, 403, "TOTEM_NOT_FOUND", "Totem não autorizado.");
+    return res.json({ totem_id: TOTEM_ID, products: [{ id: "heineken-lager", name: "Heineken", brewery: "Heineken", style: "Premium Lager", abv: 5, ibu: 23, price_per_liter: 19.90, tap_id: TAP_ID }] });
+  });
+  app.get("/api/public/totem/:totemId/config", (req, res) => {
+    if (req.params.totemId !== TOTEM_ID) return jsonError(res, 403, "TOTEM_NOT_FOUND", "Totem não autorizado.");
+    return res.json({ totem_id: TOTEM_ID, operation: DEFAULT_OPERATION_CONFIG, api_version: "v2" });
+  });
+  app.get("/api/public/totem/:totemId/operations", (req, res) => {
+    if (req.params.totemId !== TOTEM_ID) return jsonError(res, 403, "TOTEM_NOT_FOUND", "Totem não autorizado.");
+    return res.json({ totem_id: TOTEM_ID, operations: state.operations });
+  });
   app.get("/api/public/tap/health", (req, res) => {
     const totemId = req.header("X-Totem-ID");
     if (totemId && totemId !== TOTEM_ID) {
@@ -118,7 +148,7 @@ export function registerTapApi(app: Express) {
           session_id: active.sessionId,
           max_volume_ml: active.maxVolumeMl,
           max_value_cents: active.maxValueCents,
-          product: { name: active.product.name, price_per_100ml_cents: active.product.pricePer100mlCents },
+          product: { id: active.product.id, name: active.product.name, price_per_liter: active.product.pricePerLiter, price_per_100ml_cents: active.product.pricePer100mlCents },
         };
     return res.json({
       tap_id: tapId,
@@ -134,7 +164,7 @@ export function registerTapApi(app: Express) {
     if (!validateTotem(req, res, tapId)) return;
     const key = idempotencyKey(req, res);
     if (!key || cachedResponse(res, key)) return;
-    const { session_id, max_volume_ml, max_value_cents, product } = req.body ?? {};
+    const { session_id, operation_id, max_volume_ml, max_value_cents, product } = req.body ?? {};
     if (!session_id || !Number.isFinite(max_volume_ml) || max_volume_ml <= 0 || !Number.isFinite(max_value_cents) || max_value_cents <= 0 || !product?.name || !Number.isFinite(product.price_per_100ml_cents)) {
       return jsonError(res, 422, "INVALID_OPEN_PAYLOAD", "Sessão, limites e produto válidos são obrigatórios.");
     }
@@ -146,8 +176,9 @@ export function registerTapApi(app: Express) {
       status: "authorized",
       maxVolumeMl: max_volume_ml,
       maxValueCents: max_value_cents,
-      product: { name: product.name, pricePer100mlCents: product.price_per_100ml_cents },
+      product: { id: product.id ?? "unknown", name: product.name, pricePerLiter: Number(product.price_per_liter ?? product.price_per_100ml_cents * 10 / 100), pricePer100mlCents: product.price_per_100ml_cents },
       createdAt: Math.floor(Date.now() / 1000),
+      operationId: operation_id ?? session_id,
     };
     const body = { accepted: true, session_id, status: "authorized", relay: "off", command: "start_pour" };
     remember(key, 202, body);
@@ -171,17 +202,18 @@ export function registerTapApi(app: Express) {
     const key = idempotencyKey(req, res);
     if (!key || cachedResponse(res, key)) return;
     const { session_id, status, volume_poured_ml, value_cents } = req.body ?? {};
-    if (!session_id || !["finished", "error"].includes(status) || !Number.isFinite(volume_poured_ml) || volume_poured_ml < 0 || !Number.isFinite(value_cents) || value_cents < 0) {
+    if (!session_id || !["finished", "not_started", "interrupted", "error"].includes(status) || !Number.isFinite(volume_poured_ml) || volume_poured_ml < 0 || !Number.isFinite(value_cents) || value_cents < 0) {
       return jsonError(res, 422, "INVALID_FINISHED_PAYLOAD", "Dados de encerramento inválidos.");
     }
     if (state.session && state.session.sessionId !== session_id) {
       return jsonError(res, 409, "SESSION_MISMATCH", "A sessão não corresponde à torneira ativa.");
     }
     if (state.session) {
-      state.session.status = status === "finished" ? "finished" : "error";
+      state.session.status = status === "finished" || status === "not_started" ? "finished" : "error";
       state.session.finishedAt = Math.floor(Date.now() / 1000);
+      state.operations.push({ ID_OPERACAO: state.session.operationId ?? session_id, ID_TOTEM: TOTEM_ID, ID_TORNEIRA: tapId, ID_PRODUTO: state.session.product.id, VALOR_LITRO: state.session.product.pricePerLiter, VOLUME_ML: volume_poured_ml, VOLUME_LITROS: volume_poured_ml / 1000, VALOR_TOTAL: value_cents / 100, DATA_HORA_INICIO: new Date(state.session.createdAt * 1000).toISOString(), DATA_HORA_FIM: new Date(state.session.finishedAt * 1000).toISOString(), STATUS: status });
     }
-    const body = { received: true, session_closed: true, status: status === "finished" ? "finished" : "error", debited_cents: value_cents };
+    const body = { received: true, session_closed: true, status, debited_cents: value_cents };
     remember(key, 200, body);
     return res.json(body);
   });
@@ -247,17 +279,24 @@ export function registerTapApi(app: Express) {
     if (!validateTotem(req, res, tapId)) return;
     const key = idempotencyKey(req, res);
     if (!key || cachedResponse(res, key)) return;
-    const { qr_payload, nonce, timestamp } = req.body ?? {};
+    const { qr_payload, nonce, timestamp, operation_id } = req.body ?? {};
     const now = Math.floor(Date.now() / 1000);
     const isFresh = Number.isFinite(timestamp) && Math.abs(now - timestamp) <= 120;
+    const parsed = typeof qr_payload === "string" ? parseQrPayload(qr_payload) : null;
     const looksLikeWalletPayload = typeof qr_payload === "string" && qr_payload.length >= 12;
-    if (!looksLikeWalletPayload || typeof nonce !== "string" || nonce.length < 12 || !isFresh) {
+    if ((!parsed && !looksLikeWalletPayload) || typeof nonce !== "string" || nonce.length < 12 || !isFresh) {
       const body = { authorized: false, reason: "INVALID_OR_EXPIRED_QR" };
       remember(key, 200, body);
       return res.json(body);
     }
+    if (operation_id && state.processedOperations.has(operation_id)) {
+      const body = { authorized: false, reason: "DUPLICATE_OPERATION" };
+      remember(key, 409, body);
+      return res.status(409).json(body);
+    }
+    if (operation_id) state.processedOperations.add(operation_id);
     // Simulador: em produção o payload é verificado por assinatura, nonce armazenado e sessão da Wallet.
-    const body = { authorized: true, session_id: `wallet-qr-${Date.now()}`, user_id: "demo-wallet-user", authorization_method: "qr" };
+    const body = { authorized: true, session_id: `wallet-qr-${Date.now()}`, operation_id: operation_id ?? `op-${Date.now()}`, user_id: "demo-wallet-user", authorization_method: "qr", tap_id: parsed?.tapId ?? tapId, totem_id: parsed?.totemId ?? TOTEM_ID, product_id: parsed?.productId ?? null, price_per_liter: parsed?.pricePerLiter ?? null };
     remember(key, 200, body);
     return res.json(body);
   });

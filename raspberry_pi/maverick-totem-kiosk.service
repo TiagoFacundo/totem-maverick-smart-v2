@@ -1,0 +1,18 @@
+[Unit]
+Description=Maverick Smart Totem - Aplicação Kiosk
+After=graphical-session.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=maverick
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/maverick/.Xauthority
+WorkingDirectory=/opt/maverick-totem
+ExecStart=/usr/bin/chromium --kiosk --noerrdialogs --disable-infobars --check-for-update-interval=31536000 http://127.0.0.1:3000/
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=graphical.target

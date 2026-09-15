@@ -1,0 +1,16 @@
+FROM python:3.11-slim-bookworm
+WORKDIR /opt/maverick-tap
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && pip install --no-cache-dir gpiozero lgpio \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --create-home --home-dir /home/maverick --shell /usr/sbin/nologin maverick \
+    && install -d -o maverick -g maverick /var/lib/maverick-tap
+
+COPY raspberry_pi/solenoid_agent.py /opt/maverick-tap/solenoid_agent.py
+RUN chown -R maverick:maverick /opt/maverick-tap /var/lib/maverick-tap \
+    && chmod 750 /opt/maverick-tap/solenoid_agent.py
+
+USER maverick
+ENTRYPOINT ["python", "/opt/maverick-tap/solenoid_agent.py"]

@@ -1,0 +1,17 @@
+[Unit]
+Description=Maverick Smart Totem - Aplicação local
+After=network.target
+
+[Service]
+Type=simple
+User=maverick
+WorkingDirectory=/opt/maverick-totem
+EnvironmentFile=-/etc/maverick-totem/totem.env
+ExecStart=/usr/bin/env node /opt/maverick-totem/dist/index.js
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

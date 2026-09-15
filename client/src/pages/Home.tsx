@@ -2,6 +2,7 @@ import { QRCodeSVG } from "qrcode.react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, CircleAlert, CreditCard, Fingerprint, Gift, Radio, Wifi, WifiOff } from "lucide-react";
 import { TAP_ID, TOTEM_ID, calculateValueCents, createNonce, createSessionId, formatCurrency } from "../../../shared/totem";
+import { buildQrPayload } from "../../../shared/totemOperation";
 import { flushPendingFinished, queuePendingFinished, tapApi } from "@/lib/tapApi";
 import { recognizeFace, getIdlePourTransition, requestAuthorizedPour, authorizeFaceThenRequestPour, authorizeWalletQrThenRequestPour } from "@/lib/totemAuthorization";
 
@@ -77,7 +78,7 @@ export default function Home() {
   const [maxVolumeMl, setMaxVolumeMl] = useState(0); const [maxValueCents, setMaxValueCents] = useState(0);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
   const finishing = useRef(false);
-  const qrValue = useMemo(() => `maverick://tap/${TAP_ID}?totem=${TOTEM_ID}&nonce=${nonce}&t=${Math.floor(Date.now() / 1000)}`, [nonce]);
+  const qrValue = useMemo(() => buildQrPayload({ totemId: TOTEM_ID, tapId: TAP_ID, productId: "heineken-lager", pricePerLiter: PRODUCT.pricePer100mlCents * 10 }), []);
   const authorizedPourLimitMl = Math.max(0, Math.min(maxVolumeMl, Math.floor((maxValueCents / PRODUCT.pricePer100mlCents) * 100)));
 
   const reset = useCallback(() => {
@@ -146,7 +147,7 @@ export default function Home() {
       setScreen("pouring");
     } catch { setScreen("offline"); } finally { setFacePasswordSubmitting(false); }
   };
-  const activateWalletQr = async () => { try { const authorized = await authorizeWalletQrThenRequestPour(tapApi, { qr_payload: qrValue, nonce, timestamp: Math.floor(Date.now() / 1000) }, requestServerAuthorization); if (!authorized) reset(); } catch { setScreen("offline"); } };
+  const activateWalletQr = async () => { try { const operationId = `op-${Date.now()}-${createSessionId().slice(0, 8)}`; const authorized = await authorizeWalletQrThenRequestPour(tapApi, { qr_payload: qrValue, operation_id: operationId, nonce, timestamp: Math.floor(Date.now() / 1000) }, requestServerAuthorization); if (!authorized) reset(); } catch { setScreen("offline"); } };
 
   return <div className="kiosk-app"><div className="kiosk-stage"><Header offline={!isOnline || screen === "offline"} />
     {screen === "idle" && <Idle qrValue={qrValue} seconds={seconds} onFace={() => setScreen("face")} onCard={() => setScreen("card")} onDev={activateWalletQr} />}

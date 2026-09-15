@@ -19,3 +19,51 @@ O corte de emergência deve ser **físico**, normalmente fechado e instalado em 
 | Serviço | Copiar `maverick-solenoid.service` para `/etc/systemd/system/`, executar `sudo systemctl daemon-reload` e `sudo systemctl enable --now maverick-solenoid`. |
 
 Antes de conectar a bebida, valide o relé sem carga, confirme que `RELAY_ACTIVE_HIGH` corresponde ao módulo instalado e calibre `FLOW_PULSES_PER_LITER` com um volume conhecido. A condição segura é sempre **solenoide fechada** quando o agente não estiver executando, perde o comando, não consegue consultar o servidor ou recebe parada de emergência.
+
+## Modo de teste da Etapa 1
+
+O teste usa o mesmo `TapAgent`, os mesmos limites, temporizadores, cálculo e fila de encerramento do modo físico. Em uma bancada sem sensor, configure `MAVERICK_TEST_MODE=true` e `TEST_PULSES_PER_SEC=8`; o servidor ainda precisa fornecer uma autorização `start_pour`. Para validar o cenário “não iniciado”, mantenha `TEST_PULSES_PER_SEC=0`: após `NO_FLOW_START_SECONDS=10` a válvula será desligada e o encerramento será registrado como `not_started`. O agente sempre prioriza o desligamento do relé antes de qualquer comunicação.
+
+## Instalador automático
+
+A partir da raiz do repositório, o instalador prepara o Raspberry Pi OS, cria o usuário `maverick`, instala as dependências, compila a aplicação, instala o agente GPIO, cria os arquivos de ambiente e registra os serviços `systemd`:
+
+```bash
+chmod 750 raspberry_pi/install.sh
+sudo raspberry_pi/install.sh
+```
+
+Por segurança, o comando acima **não inicia os serviços**. Depois de revisar a configuração:
+
+```bash
+sudo nano /etc/maverick-tap/solenoid.env
+sudo nano /etc/maverick-totem/totem.env
+sudo systemctl status maverick-totem.service maverick-solenoid.service --no-pager
+```
+
+Para habilitar a aplicação e o agente:
+
+```bash
+sudo raspberry_pi/install.sh --enable
+```
+
+Para habilitar também o Chromium em modo kiosk:
+
+```bash
+sudo raspberry_pi/install.sh --enable --kiosk
+```
+
+O instalador preserva arquivos de configuração existentes. Para uma instalação a partir de um build já gerado, use `--skip-build` e disponibilize um diretório de repositório contendo `dist/index.js`:
+
+```bash
+sudo MAVERICK_REPO_DIR=/caminho/do/projeto raspberry_pi/install.sh --skip-build
+```
+
+Opções úteis:
+
+- `--dry-run`: exibe os comandos planejados sem alterar o sistema;
+- `--enable`: habilita e inicia o serviço da aplicação e o agente GPIO;
+- `--kiosk`: habilita o navegador em tela cheia;
+- `--skip-build`: não reinstala dependências nem executa o build.
+
+Depois da instalação, siga o [guia completo de testes](../docs/GUIA_INSTALACAO_TESTE_RASPBERRY_PI.md). O modo `MAVERICK_TEST_MODE` deve ser usado primeiro sem carga hidráulica. A solenoide somente deve ser conectada depois da validação do relé/driver, fusível, alimentação dedicada e botão de emergência físico.

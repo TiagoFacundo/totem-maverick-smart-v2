@@ -1,0 +1,42 @@
+services:
+  totem-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: maverick-totem:latest
+    container_name: maverick-totem-app
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    ports:
+      - "${TOTEM_HTTP_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/api/public/tap/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  solenoid-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    image: maverick-totem-agent:latest
+    container_name: maverick-solenoid-agent
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    depends_on:
+      totem-app:
+        condition: service_healthy
+    devices:
+      - "/dev/gpiomem:/dev/gpiomem"
+      - "/dev/gpiochip0:/dev/gpiochip0"
+    group_add:
+      - "${GPIO_GID:-997}"
+    volumes:
+      - maverick-tap-state:/var/lib/maverick-tap
+    stop_grace_period: 10s
+
+volumes:
+  maverick-tap-state:

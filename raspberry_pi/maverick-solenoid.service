@@ -11,6 +11,8 @@ EnvironmentFile=/etc/maverick-tap/solenoid.env
 ExecStart=/usr/bin/python3 /opt/maverick-tap/solenoid_agent.py
 Restart=always
 RestartSec=3
+WatchdogSec=15
+TimeoutStopSec=10
 NoNewPrivileges=true
 PrivateTmp=true
 

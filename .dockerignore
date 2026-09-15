@@ -1,0 +1,15 @@
+.git
+.gitignore
+node_modules
+.pnpm-store
+dist
+coverage
+.env
+.env.*
+!.env.docker.example
+*.log
+__pycache__
+*.pyc
+.webdev
+.vscode
+.idea

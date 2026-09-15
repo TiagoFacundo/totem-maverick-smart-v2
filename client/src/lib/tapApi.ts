@@ -51,6 +51,8 @@ export const tapApi = {
     headers: headers(createSessionId()),
     body: JSON.stringify({ tap_id: TAP_ID, totem_id: TOTEM_ID, ...payload }),
   }),
+  products: () => requestWithRetry(`/api/public/totem/${TOTEM_ID}/products`, { headers: { "X-Totem-ID": TOTEM_ID } }),
+  config: () => requestWithRetry(`/api/public/totem/${TOTEM_ID}/config`, { headers: { "X-Totem-ID": TOTEM_ID } }),
   open: (payload: JsonRecord, key: string) => requestWithRetry<{ accepted: boolean; status: string }>(`/api/public/tap/${TAP_ID}/open`, {
     method: "POST",
     headers: headers(key),
