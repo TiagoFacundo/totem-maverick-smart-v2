@@ -29,6 +29,9 @@ services:
     depends_on:
       totem-app:
         condition: service_healthy
+    # Necessário para kernels Raspberry Pi que expõem GPIO via gpiochip.
+    # Apenas o agente recebe este privilégio; a aplicação web permanece sem ele.
+    privileged: true
     devices:
       - "/dev/gpiomem:/dev/gpiomem"
       - "/dev/gpiochip0:/dev/gpiochip0"

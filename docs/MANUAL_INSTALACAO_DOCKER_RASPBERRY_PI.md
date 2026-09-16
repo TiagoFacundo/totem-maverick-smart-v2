@@ -369,3 +369,36 @@ Para remover Docker do sistema, use o procedimento oficial da distribuição e c
 - [ ] O acesso externo é somente por HTTPS/TLS.
 
 Docker fornece empacotamento e reinicialização automática, mas não substitui systemd, firewall, TLS, atualização do Raspberry Pi OS ou os intertravamentos elétricos necessários para uma instalação de produção.
+
+## Diagnóstico de erro GPIO no container
+
+Se o log mostrar `can not open gpiochip`, `unable to open /dev/gpiomem` ou `BadPinFactory: Unable to load any default pin factory`, verifique primeiro os dispositivos no host:
+
+```bash
+ls -l /dev/gpiomem /dev/gpiochip* 2>&1
+getent group gpio || true
+```
+
+A versão atual do `docker-compose.yml` executa somente o `solenoid-agent` como root dentro do container e usa `privileged: true` apenas nesse serviço, além de mapear `/dev/gpiomem` e `/dev/gpiochip0`. Isso é necessário em algumas combinações de Raspberry Pi OS/kernel para que `lgpio` consiga abrir o chip. O container da aplicação web continua sem acesso a GPIO.
+
+Depois de atualizar o repositório, recrie obrigatoriamente a imagem e o container do agente:
+
+```bash
+cd /opt/maverick-totem-src
+git pull origin main
+docker compose down solenoid-agent
+docker compose build --no-cache solenoid-agent
+docker compose up -d solenoid-agent
+docker compose logs -f solenoid-agent
+```
+
+Se `/dev/gpiochip0` não existir no host, não altere o compose para um caminho arbitrário. Consulte os chips disponíveis:
+
+```bash
+ls -l /dev/gpiochip*
+gpioinfo 2>/dev/null || true
+```
+
+Nesse caso, ajuste a linha `devices` para o chip correto do seu Raspberry Pi e recrie o container. Em Raspberry Pi 5, o chip GPIO exposto pelo kernel pode não ser `gpiochip0`; confirme sempre com `ls`/`gpioinfo` antes de configurar.
+
+Faça o primeiro teste com a fonte da solenoide desligada. O acesso Docker ao GPIO não substitui o botão de emergência físico nem deve ser validado com a válvula energizada sem relé/driver, fusível e circuito normalmente fechado.

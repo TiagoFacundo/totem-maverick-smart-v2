@@ -12,5 +12,7 @@ COPY raspberry_pi/solenoid_agent.py /opt/maverick-tap/solenoid_agent.py
 RUN chown -R maverick:maverick /opt/maverick-tap /var/lib/maverick-tap \
     && chmod 750 /opt/maverick-tap/solenoid_agent.py
 
-USER maverick
+# O gpiozero/lgpio precisa abrir /dev/gpiomem e /dev/gpiochip*.
+# O Compose restringe este container ao serviço do agente e fornece os devices.
+USER root
 ENTRYPOINT ["python", "/opt/maverick-tap/solenoid_agent.py"]
