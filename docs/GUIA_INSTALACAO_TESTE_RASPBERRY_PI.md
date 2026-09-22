@@ -138,7 +138,8 @@ TOTEM_ID=TOTEM_001
 TAP_ID=TORNEIRA_01
 SOLENOID_GPIO=17
 FLOW_SENSOR_GPIO=27
-RELAY_ACTIVE_HIGH=true
+# Padrão para módulos comuns ativos em nível baixo; confirme sem carga.
+RELAY_ACTIVE_HIGH=false
 FLOW_PULSES_PER_LITER=450
 FLOW_THRESHOLD_PULSES_PER_SEC=0.5
 NO_FLOW_START_SECONDS=10
@@ -153,6 +154,8 @@ LOG_LEVEL=INFO
 ```
 
 O valor `FLOW_PULSES_PER_LITER=450` é apenas um ponto inicial. Ele deve ser calibrado com um volume conhecido e depois atualizado no arquivo de ambiente.
+
+Com `MAVERICK_TEST_MODE=false`, o controle de vazão físico fica ativo: o GPIO27 conta os pulsos do sensor, o agente calcula o volume e interrompe a solenoide quando não há fluxo inicial, quando o fluxo para, quando o limite autorizado é atingido ou quando ocorre timeout. A solenoide somente é energizada após um comando `start_pour` autorizado.
 
 Proteja a configuração:
 

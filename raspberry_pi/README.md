@@ -20,6 +20,10 @@ O corte de emergência deve ser **físico**, normalmente fechado e instalado em 
 
 Antes de conectar a bebida, valide o relé sem carga, confirme que `RELAY_ACTIVE_HIGH` corresponde ao módulo instalado e calibre `FLOW_PULSES_PER_LITER` com um volume conhecido. A condição segura é sempre **solenoide fechada** quando o agente não estiver executando, perde o comando, não consegue consultar o servidor ou recebe parada de emergência.
 
+## Controle de vazão e modo de teste
+
+O controle de vazão físico fica ativo com `MAVERICK_TEST_MODE=false`: o sensor ligado ao GPIO27 conta os pulsos, `FLOW_PULSES_PER_LITER` converte os pulsos em mililitros e o agente encerra a operação por ausência de fluxo inicial, parada do fluxo, limite de volume, limite financeiro ou timeout. O relé só é energizado depois de `start_pour` com autorização explícita. Use `RELAY_ACTIVE_HIGH=false` para o padrão de módulos ativos em nível baixo, confirmando a polaridade no teste sem carga.
+
 ## Modo de teste da Etapa 1
 
 O teste usa o mesmo `TapAgent`, os mesmos limites, temporizadores, cálculo e fila de encerramento do modo físico. Em uma bancada sem sensor, configure `MAVERICK_TEST_MODE=true` e `TEST_PULSES_PER_SEC=8`; o servidor ainda precisa fornecer uma autorização `start_pour`. Para validar o cenário “não iniciado”, mantenha `TEST_PULSES_PER_SEC=0`: após `NO_FLOW_START_SECONDS=10` a válvula será desligada e o encerramento será registrado como `not_started`. O agente sempre prioriza o desligamento do relé antes de qualquer comunicação.
