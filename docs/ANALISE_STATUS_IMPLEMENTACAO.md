@@ -6,7 +6,7 @@
 
 ## Resumo executivo
 
-O Totem Maverick Smart possui uma **base funcional de ponta a ponta para desenvolvimento**: a interface touchscreen de 7 polegadas está implementada, os fluxos de QR Code, Face ID e cartão existem, há um contrato REST simulável, o agente de Raspberry Pi foi preparado para controlar a solenoide com fail-safe e a documentação técnica está disponível tanto no repositório quanto na rota `/docs`. A última execução local confirmou checagem TypeScript e **28 testes em 9 arquivos de teste**.[1] [2]
+O Totem Maverick Smart possui uma **base funcional de ponta a ponta para desenvolvimento**: a interface touchscreen de 7 polegadas está implementada, os fluxos de QR Code, Face ID e cartão existem, há um contrato REST simulável, o agente de Raspberry Pi foi preparado para controlar a solenoide com fail-safe e a documentação técnica está disponível tanto no repositório quanto na rota `/docs`. A última execução local confirmou checagem TypeScript e **35 testes em 11 arquivos de teste**.[1] [2]
 
 O principal ponto de atenção é a diferença entre **fluxo implementado** e **operação real**. Wallet, biometria, PIN, pagamentos por cartão, catálogo, estoque, banco operacional e instalação física ainda usam simulação, dados fixos ou preparação de código. Portanto, o sistema já é adequado para demonstrar a experiência e homologar contratos e hardware em bancada, mas exige integrações e validações adicionais antes de atender clientes.
 
@@ -23,7 +23,7 @@ O principal ponto de atenção é a diferença entre **fluxo implementado** e **
 | API de dispensação | Implementada como simulador | Headers, idempotência, sessão, comando e encerramento | Requer servidor central persistente |
 | Raspberry Pi/solenoide | Código implementado | GPIO, fluxo, limites, fail-safe e fila local | Requer montagem, calibração e homologação elétrica |
 | Segurança e resiliência | Parcialmente implementadas | Retry, filas, limites, E-stop lógico e desligamento seguro | Requer credenciais fortes, observabilidade e E-stop físico homologado |
-| Testes e documentação | Implementados | 28 testes locais, documentação técnica e página `/docs` | Ainda requer testes integrados com componentes reais |
+| Testes e documentação | Implementados | 35 testes locais, documentação técnica e página `/docs` | Ainda requer testes integrados com componentes reais |
 
 ## O que já foi implementado
 
@@ -68,7 +68,7 @@ As condições de fechamento já previstas incluem limite de volume, limite fina
 
 ### Qualidade, documentação e rastreabilidade
 
-O projeto possui cobertura de contrato REST, idempotência, cliente de comunicação, fila de finalizações, interface, regressões de Face ID, QR Code, cartão e rota `/docs`. A verificação atual é `pnpm check && pnpm test`, com 28 testes aprovados em 9 arquivos.[1] [2]
+O projeto possui cobertura de contrato REST, idempotência, cliente de comunicação, fila de finalizações, interface, regressões de Face ID, QR Code, cartão, heartbeat e rota `/docs`. A verificação atual é `pnpm check && pnpm test`, com 35 testes aprovados em 11 arquivos.[1] [2]
 
 Além do arquivo técnico consolidado, a rota `/docs` oferece acesso navegável à documentação de arquitetura, segurança, operações e limitações. A página foi verificada em desktop e em viewport vertical compacto.[8] [9]
 
