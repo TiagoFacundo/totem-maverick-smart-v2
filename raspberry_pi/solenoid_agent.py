@@ -31,7 +31,9 @@ TOTEM_ID = os.environ.get("TOTEM_ID", "TOTEM_001")
 TAP_ID = os.environ.get("TAP_ID", "TORNEIRA_01")
 RELAY_GPIO = int(os.environ.get("SOLENOID_GPIO", "17"))
 FLOW_GPIO = int(os.environ.get("FLOW_SENSOR_GPIO", "27"))
-RELAY_ACTIVE_HIGH = os.environ.get("RELAY_ACTIVE_HIGH", "true").lower() == "true"
+# A maioria dos módulos de relé para Raspberry Pi é ativo em nível baixo.
+# Ajuste para true somente após testar o seu módulo sem a solenoide conectada.
+RELAY_ACTIVE_HIGH = os.environ.get("RELAY_ACTIVE_HIGH", "false").lower() == "true"
 FLOW_PULSES_PER_LITER = float(os.environ.get("FLOW_PULSES_PER_LITER", "450"))
 FLOW_THRESHOLD_PULSES_PER_SEC = float(os.environ.get("FLOW_THRESHOLD_PULSES_PER_SEC", "0.5"))
 NO_FLOW_START_SECONDS = float(os.environ.get("NO_FLOW_START_SECONDS", "10"))
@@ -276,8 +278,12 @@ class TapAgent:
             self.finish("error", "EMERGENCY_STOP")
         elif command_type == "close":
             self.finish("finished")
-        elif command_type == "start_pour":
+        elif command_type == "start_pour" and command.get("authorized") is True:
             self.start_pour(command)
+        else:
+            # Nunca energizar a saída por comando ausente, desconhecido ou sem
+            # autorização explícita. Isso também cobre respostas antigas do API.
+            self.solenoid.off()
 
     def run(self) -> None:
         try:

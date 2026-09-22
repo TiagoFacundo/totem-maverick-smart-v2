@@ -142,9 +142,10 @@ export function registerTapApi(app: Express) {
       return res.json({ tap_id: tapId, status: "idle", command: null, session: null, timestamp: Math.floor(Date.now() / 1000) });
     }
     const command = active.status === "error"
-      ? { type: "emergency_stop", session_id: active.sessionId }
+      ? { type: "emergency_stop", session_id: active.sessionId, authorized: false }
       : {
           type: "start_pour",
+          authorized: true,
           session_id: active.sessionId,
           max_volume_ml: active.maxVolumeMl,
           max_value_cents: active.maxValueCents,
