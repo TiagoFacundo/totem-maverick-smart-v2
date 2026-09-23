@@ -68,7 +68,7 @@ else
   export DEBIAN_FRONTEND=noninteractive
   log "instalando dependências do sistema"
   apt-get update
-  apt-get install -y --no-install-recommends git curl ca-certificates python3 python3-gpiozero nodejs npm chromium systemd openssl
+  apt-get install -y --no-install-recommends git curl ca-certificates python3 python3-gpiozero python3-lgpio nodejs npm chromium systemd openssl
 fi
 
 if ! id "$APP_USER" >/dev/null 2>&1; then

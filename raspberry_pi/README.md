@@ -12,7 +12,7 @@ O corte de emergência deve ser **físico**, normalmente fechado e instalado em 
 
 | Etapa | Comando ou ação |
 |---|---|
-| Dependência GPIO | `sudo apt install python3-gpiozero` |
+| Dependência GPIO | `sudo apt install python3-gpiozero python3-lgpio` |
 | Diretório | `sudo install -d -o maverick -g maverick /opt/maverick-tap /var/lib/maverick-tap` |
 | Código | Copiar `solenoid_agent.py` para `/opt/maverick-tap/` e tornar executável com `chmod 750`. |
 | Configuração | Copiar `solenoid.env.example` para `/etc/maverick-tap/solenoid.env`, ajustar URL, GPIO, lógica do relé e calibração do sensor. |

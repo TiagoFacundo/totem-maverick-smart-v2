@@ -8,6 +8,7 @@ Type=simple
 User=maverick
 WorkingDirectory=/opt/maverick-tap
 EnvironmentFile=/etc/maverick-tap/solenoid.env
+Environment=GPIOZERO_PIN_FACTORY=lgpio
 ExecStart=/usr/bin/python3 /opt/maverick-tap/solenoid_agent.py
 Restart=always
 RestartSec=3
