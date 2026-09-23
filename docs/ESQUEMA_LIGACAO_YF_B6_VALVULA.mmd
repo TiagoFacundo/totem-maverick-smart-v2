@@ -1,0 +1,55 @@
+%%{init: {"theme": "base", "themeVariables": {"fontFamily": "Arial", "fontSize": "18px", "primaryColor": "#e8f3f5", "primaryTextColor": "#102a33", "primaryBorderColor": "#137c8b", "lineColor": "#40545b", "secondaryColor": "#fff4dc", "tertiaryColor": "#fbe7e7"}}}%%
+flowchart LR
+  classDef logic fill:#e8f3f5,stroke:#137c8b,stroke-width:2px,color:#102a33
+  classDef power fill:#fff4dc,stroke:#c47a00,stroke-width:2px,color:#4d3000
+  classDef safety fill:#fbe7e7,stroke:#bd3d3d,stroke-width:2px,color:#5a1717
+  classDef warning fill:#fff0f0,stroke:#c43d3d,stroke-width:2px,color:#5a1717
+  classDef sensor fill:#eaf4ea,stroke:#3c8743,stroke-width:2px,color:#1e4c24
+
+  subgraph PI[ Raspberry Pi — sinais lógicos 3,3 V ]
+    G17[GPIO17 / pino físico 11<br/>Sinal do relé]:::logic
+    G27[GPIO27 / pino físico 13<br/>Entrada de pulsos]:::logic
+    PGND[GND / pino físico 6]:::logic
+  end
+
+  subgraph CTRL[Controle de baixa tensão]
+    RELAY[Relé ou driver isolado<br/>IN · GND · VCC<br/>RELAY_ACTIVE_HIGH=false]:::logic
+    LEVEL[Conversor de nível ou divisor<br/>YF-B6 OUT reduzido para 0–3,3 V]:::warning
+  end
+
+  subgraph FLOW[Sensor YF-B6]
+    RED[Fio vermelho<br/>VCC do sensor]:::sensor
+    BLACK[Fio preto<br/>GND do sensor]:::sensor
+    YELLOW[Fio amarelo<br/>OUT / pulsos]:::sensor
+  end
+
+  subgraph POWER[Potência da válvula — fonte dedicada]
+    VPS[+ Fonte da válvula]:::power
+    FUSE[Fusível dimensionado]:::safety
+    ESTOP[E-stop físico NC<br/>normalmente fechado]:::safety
+    COM[COM do relé]:::power
+    NO[NO do relé<br/>Normally Open]:::power
+    VALVE[Válvula solenoide<br/>entrada +]:::power
+    VNEG[− da válvula<br/>retorno à fonte]:::power
+  end
+
+  G17 -->|IN| RELAY
+  PGND -->|GND lógico| RELAY
+  PGND --- BLACK
+  RED -->|5 V ou tensão do datasheet<br/>fonte adequada do sensor| VPSENSOR[Alimentação do YF-B6]:::power
+  YELLOW --> LEVEL --> G27
+
+  VPS --> FUSE --> ESTOP --> COM --> NO --> VALVE --> VNEG
+  VNEG --- VPS
+  RELAY -. contato isolado .-> COM
+
+  NOTE1[ATENÇÃO: não ligue YELLOW diretamente ao GPIO27 se o YF-B6 estiver em 5 V.<br/>O sinal pode atingir cerca de 4,7 V.]:::warning
+  NOTE2[Use COM + NO. Não use COM + NC.<br/>A válvula deve ficar fechada com o relé desligado.]:::warning
+  NOTE3[O GPIO17 aciona apenas o relé/driver.<br/>A bobina usa fonte própria.]:::warning
+
+  LEVEL -.-> NOTE1
+  NO -.-> NOTE2
+  VALVE -.-> NOTE3
+
+  linkStyle 0,1,2,3,4,5,6,7,8 stroke:#137c8b,stroke-width:2px
+  linkStyle 9,10,11,12,13,14,15 stroke:#c47a00,stroke-width:3px

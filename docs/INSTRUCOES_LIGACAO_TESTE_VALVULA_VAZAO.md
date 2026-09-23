@@ -4,6 +4,10 @@
 **Aplicação:** bancada de teste com Raspberry Pi, sensor de vazão, relé ou driver isolado e válvula solenoide  
 **Estado:** procedimento de homologação em bancada
 
+![Diagrama de ligação do sensor YF-B6, Raspberry Pi, relé e válvula](./ESQUEMA_LIGACAO_YF_B6_VALVULA.png)
+
+Fonte editável do diagrama: [ESQUEMA_LIGACAO_YF_B6_VALVULA.mmd](./ESQUEMA_LIGACAO_YF_B6_VALVULA.mmd).
+
 ## 1. Objetivo e condição de segurança
 
 Este documento descreve como ligar e testar o conjunto responsável por liberar e medir o fluxo. O procedimento começa com o relé sem carga e somente depois conecta a válvula a uma fonte hidráulica controlada.
