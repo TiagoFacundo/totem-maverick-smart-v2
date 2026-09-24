@@ -25,7 +25,7 @@ from urllib.request import Request, urlopen
 from gpiozero import Button, OutputDevice
 
 
-SERVER_URL = os.environ.get("MAVERICK_SERVER_URL", "https://SEU-SERVIDOR.example.com").rstrip("/")
+SERVER_URL = os.environ.get("MAVERICK_SERVER_URL", "https://maverickgrowch.com.br").rstrip("/")
 API_TOKEN = os.environ.get("TOTEM_API_TOKEN", "")
 TOTEM_ID = os.environ.get("TOTEM_ID", "TOTEM_001")
 TAP_ID = os.environ.get("TAP_ID", "TORNEIRA_01")
