@@ -66,7 +66,11 @@ def notify_watchdog() -> None:
 
 
 def json_request(method: str, path: str, payload: dict[str, Any] | None = None, idempotency_key: str | None = None) -> dict[str, Any]:
-    headers = {"X-Totem-ID": TOTEM_ID, "Accept": "application/json"}
+    headers = {
+        "X-Totem-ID": TOTEM_ID,
+        "Accept": "application/json",
+        "User-Agent": "maverick-tap/2.0",
+    }
     if API_TOKEN:
         headers["Authorization"] = f"Bearer {API_TOKEN}"
     body = None
