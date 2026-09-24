@@ -103,7 +103,7 @@ export function getTapSimulatorState() {
 export function registerTapApi(app: Express) {
   app.get("/api/public/totem/:totemId/products", (req, res) => {
     if (req.params.totemId !== TOTEM_ID) return jsonError(res, 403, "TOTEM_NOT_FOUND", "Totem não autorizado.");
-    return res.json({ totem_id: TOTEM_ID, products: [{ id: "heineken-lager", name: "Heineken", brewery: "Heineken", style: "Premium Lager", abv: 5, ibu: 23, price_per_liter: 19.90, tap_id: TAP_ID }] });
+    return res.json({ totem_id: TOTEM_ID, products: [{ id: "brahma-lager", name: "Brahma", brand: "Brahma", brewery: "Ambev", style: "American Lager", abv: 2.5, ibu: 14, price_per_liter: 15.99, price_per_100ml_cents: 160, tap_id: TAP_ID }] });
   });
   app.get("/api/public/totem/:totemId/config", (req, res) => {
     if (req.params.totemId !== TOTEM_ID) return jsonError(res, 403, "TOTEM_NOT_FOUND", "Totem não autorizado.");

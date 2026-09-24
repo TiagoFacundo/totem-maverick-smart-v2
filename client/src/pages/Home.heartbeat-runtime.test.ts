@@ -55,6 +55,6 @@ describe("heartbeat operacional do totem", () => {
     render(createElement(Home));
 
     await waitFor(() => expect(screen.getByRole("banner").querySelector(".connection.offline")).not.toBeNull());
-    expect(screen.getByRole("heading", { name: "Heineken Lager" })).not.toBeNull();
+    expect(screen.getByRole("heading", { name: "Brahma" })).not.toBeNull();
   });
 });

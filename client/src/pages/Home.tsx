@@ -7,7 +7,7 @@ import { flushPendingFinished, queuePendingFinished, tapApi } from "@/lib/tapApi
 import { recognizeFace, getIdlePourTransition, requestAuthorizedPour, authorizeFaceThenRequestPour, authorizeWalletQrThenRequestPour } from "@/lib/totemAuthorization";
 
 const LOGO_URL = "/manus-storage/maverick-reference-logo_09b4ddb1.png";
-const PRODUCT = { name: "Heineken Lager", style: "Lager Pilsen", brand: "Heineken", pricePer100mlCents: 349, abv: "5,0%", ibu: "5,5", pricePerLiter: "R$ 34,90" };
+const PRODUCT = { name: "Brahma", style: "American Lager", brand: "Brahma", pricePer100mlCents: 160, abv: "2,5%", ibu: "14", pricePerLiter: "R$ 15,99" };
 
 type Screen = "idle" | "face" | "face-password" | "card" | "pouring" | "completed" | "offline" | "error";
 
@@ -30,7 +30,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 export function Idle({ qrValue, seconds, onFace, onCard, onDev }: { qrValue: string; seconds: number; onFace: () => void; onCard: () => void; onDev: () => void }) {
   return <main className="ref-content ref-idle">
     <ProductHeader />
-    <section className="brand-panel"><div className="brand-placeholder">★<span>Heineken</span></div><div><span>Marca</span><strong>{PRODUCT.brand}</strong></div><Gift className="brand-gift" /></section>
+    <section className="brand-panel"><div className="brand-placeholder">★<span>{PRODUCT.brand}</span></div><div><span>Marca</span><strong>{PRODUCT.brand}</strong></div><Gift className="brand-gift" /></section>
     <section className="metrics-grid"><Metric label="Preço por Litro" value={PRODUCT.pricePerLiter} /><Metric label="Preço por 100ml" value={formatCurrency(PRODUCT.pricePer100mlCents)} /><Metric label="ABV" value={PRODUCT.abv} /><Metric label="IBU" value={PRODUCT.ibu} /></section>
     <div className="pdv-panel"><span>PDV</span><strong>Toca do Tatu - Moema</strong></div>
     <div className="qr-zone"><div className="qr-frame"><QRCodeSVG value={qrValue} size={154} level="H" includeMargin={false} fgColor="#06232a" /></div><span>Atualiza em {seconds}s</span></div>
@@ -78,7 +78,7 @@ export default function Home() {
   const [maxVolumeMl, setMaxVolumeMl] = useState(0); const [maxValueCents, setMaxValueCents] = useState(0);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
   const finishing = useRef(false);
-  const qrValue = useMemo(() => buildQrPayload({ totemId: TOTEM_ID, tapId: TAP_ID, productId: "heineken-lager", pricePerLiter: PRODUCT.pricePer100mlCents * 10 }), []);
+  const qrValue = useMemo(() => buildQrPayload({ totemId: TOTEM_ID, tapId: TAP_ID, productId: "brahma-lager", pricePerLiter: 15.99 }), []);
   const authorizedPourLimitMl = Math.max(0, Math.min(maxVolumeMl, Math.floor((maxValueCents / PRODUCT.pricePer100mlCents) * 100)));
 
   const reset = useCallback(() => {

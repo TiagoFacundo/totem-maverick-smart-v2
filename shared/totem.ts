@@ -39,15 +39,15 @@ export type TapCommand = {
 
 export const PRODUCTS: Product[] = [
   {
-    id: "heineken-lager",
-    name: "Heineken",
-    description: "Lager refrescante, com amargor equilibrado e final limpo.",
-    brewery: "Heineken",
-    style: "Premium Lager",
-    abv: "5,0%",
-    ibu: "23",
-    pricePer100mlCents: 199,
-    accent: "#32c873",
+    id: "brahma-lager",
+    name: "Brahma",
+    description: "American Lager leve e refrescante, servida na torneira do Totem.",
+    brewery: "Ambev",
+    style: "American Lager",
+    abv: "2,5%",
+    ibu: "14",
+    pricePer100mlCents: 160,
+    accent: "#d9a441",
   },
   {
     id: "maverick-pilsen",
