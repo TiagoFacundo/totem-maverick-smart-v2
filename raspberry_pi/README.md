@@ -51,11 +51,13 @@ Para habilitar a aplicação e o agente:
 sudo raspberry_pi/install.sh --enable
 ```
 
-Para habilitar também o Chromium em modo kiosk:
+Para habilitar também o aplicativo local em tela cheia:
 
 ```bash
 sudo raspberry_pi/install.sh --enable --kiosk
 ```
+
+O modo `--kiosk` não abre um site público nem exige navegação manual: o serviço inicia a interface local em `127.0.0.1:3000` usando uma janela de aplicativo sem abas, barra de endereço ou controles do navegador, ocupando toda a tela do totem. A internet é usada somente pelas chamadas da aplicação para a API de autorização, heartbeat e telemetria.
 
 O instalador preserva arquivos de configuração existentes. Para uma instalação a partir de um build já gerado, use `--skip-build` e disponibilize um diretório de repositório contendo `dist/index.js`:
 
@@ -67,7 +69,7 @@ Opções úteis:
 
 - `--dry-run`: exibe os comandos planejados sem alterar o sistema;
 - `--enable`: habilita e inicia o serviço da aplicação e o agente GPIO;
-- `--kiosk`: habilita o navegador em tela cheia;
+- `--kiosk`: habilita o aplicativo local em tela cheia, sem abas ou barra de endereço;
 - `--skip-build`: não reinstala dependências nem executa o build.
 
 Depois da instalação, siga o [guia completo de testes](../docs/GUIA_INSTALACAO_TESTE_RASPBERRY_PI.md). O modo `MAVERICK_TEST_MODE` deve ser usado primeiro sem carga hidráulica. A solenoide somente deve ser conectada depois da validação do relé/driver, fusível, alimentação dedicada e botão de emergência físico.
