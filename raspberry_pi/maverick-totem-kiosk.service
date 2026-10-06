@@ -9,7 +9,7 @@ User=maverick
 Environment=DISPLAY=:0
 Environment=XAUTHORITY=/home/maverick/.Xauthority
 WorkingDirectory=/opt/maverick-totem
-ExecStart=/usr/bin/chromium --app=http://127.0.0.1:3000/ --kiosk --start-fullscreen --noerrdialogs --disable-infobars --disable-session-crashed-bubble --disable-features=Translate,MediaRouter --check-for-update-interval=31536000
+ExecStart=/usr/bin/chromium --app=http://127.0.0.1:3000/ --kiosk --start-fullscreen --noerrdialogs --disable-infobars --disable-session-crashed-bubble --disable-translate --disable-features=Translate,MediaRouter --check-for-update-interval=31536000
 Restart=always
 RestartSec=5
 NoNewPrivileges=true
