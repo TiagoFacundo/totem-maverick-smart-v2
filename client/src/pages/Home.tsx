@@ -5,7 +5,7 @@ import { buildQrPayload } from "../../../shared/totemOperation";
 import { flushPendingFinished, queuePendingFinished, tapApi } from "@/lib/tapApi";
 import { recognizeFace, getIdlePourTransition, requestAuthorizedPour, authorizeFaceThenRequestPour, authorizeWalletQrThenRequestPour } from "@/lib/totemAuthorization";
 
-const LOGO_URL = "/manus-storage/maverick-reference-logo_09b4ddb1.png";
+const LOGO_URL = "/maverick-logo-v2.png";
 const PAYMENT_QR_URL = "/maverick-payment-qr-v3.png";
 const PRODUCT = { name: "Brahma", style: "American Lager", brand: "Brahma", pricePer100mlCents: 160, abv: "2,5%", ibu: "14", pricePerLiter: "R$ 15,99" };
 
