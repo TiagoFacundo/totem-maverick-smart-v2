@@ -1,4 +1,3 @@
-import { QRCodeSVG } from "qrcode.react";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, CircleAlert, CreditCard, Fingerprint, Gift, Radio, Wifi, WifiOff } from "lucide-react";
 import { TAP_ID, TOTEM_ID, calculateValueCents, createNonce, createSessionId, formatCurrency } from "../../../shared/totem";
@@ -7,6 +6,7 @@ import { flushPendingFinished, queuePendingFinished, tapApi } from "@/lib/tapApi
 import { recognizeFace, getIdlePourTransition, requestAuthorizedPour, authorizeFaceThenRequestPour, authorizeWalletQrThenRequestPour } from "@/lib/totemAuthorization";
 
 const LOGO_URL = "/manus-storage/maverick-reference-logo_09b4ddb1.png";
+const PAYMENT_QR_URL = "/maverick-payment-qr.png";
 const PRODUCT = { name: "Brahma", style: "American Lager", brand: "Brahma", pricePer100mlCents: 160, abv: "2,5%", ibu: "14", pricePerLiter: "R$ 15,99" };
 
 type Screen = "idle" | "face" | "face-password" | "card" | "pouring" | "completed" | "offline" | "error";
@@ -27,13 +27,13 @@ function Metric({ label, value }: { label: string; value: string }) {
   return <div className="metric"><span>{label}</span><strong>{value}</strong></div>;
 }
 
-export function Idle({ qrValue, seconds, onFace, onCard, onDev }: { qrValue: string; seconds: number; onFace: () => void; onCard: () => void; onDev: () => void }) {
+export function Idle({ seconds, onFace, onCard, onDev }: { seconds: number; onFace: () => void; onCard: () => void; onDev: () => void }) {
   return <main className="ref-content ref-idle">
     <ProductHeader />
     <section className="brand-panel"><div className="brand-placeholder">★<span>{PRODUCT.brand}</span></div><div><span>Marca</span><strong>{PRODUCT.brand}</strong></div><Gift className="brand-gift" /></section>
     <section className="metrics-grid"><Metric label="Preço por Litro" value={PRODUCT.pricePerLiter} /><Metric label="Preço por 100ml" value={formatCurrency(PRODUCT.pricePer100mlCents)} /><Metric label="ABV" value={PRODUCT.abv} /><Metric label="IBU" value={PRODUCT.ibu} /></section>
     <div className="pdv-panel"><span>PDV</span><strong>Toca do Tatu - Moema</strong></div>
-    <div className="qr-zone"><div className="qr-frame"><QRCodeSVG value={qrValue} size={154} level="H" includeMargin={false} fgColor="#06232a" /></div><span>Atualiza em {seconds}s</span></div>
+    <div className="qr-zone"><div className="qr-frame"><img className="payment-qr" src={PAYMENT_QR_URL} alt="QR Code para pagamento" /></div><span>Escaneie para iniciar</span></div>
     <div className="action-grid"><button data-touch-target="48" className="teal-action" onClick={onFace}><Fingerprint /> USAR FACE ID</button><button data-touch-target="48" className="teal-action" onClick={onCard}><CreditCard /> COMPRAR COM CARTÃO</button></div>
     <button data-touch-target="48" className="dev-action" onClick={onDev}>[DEV] SIMULAR ESCANEAMENTO</button>
   </main>;
@@ -150,7 +150,7 @@ export default function Home() {
   const activateWalletQr = async () => { try { const operationId = `op-${Date.now()}-${createSessionId().slice(0, 8)}`; const authorized = await authorizeWalletQrThenRequestPour(tapApi, { qr_payload: qrValue, operation_id: operationId, nonce, timestamp: Math.floor(Date.now() / 1000) }, requestServerAuthorization); if (!authorized) reset(); } catch { setScreen("offline"); } };
 
   return <div className="kiosk-app"><div className="kiosk-stage"><Header offline={!isOnline || screen === "offline"} />
-    {screen === "idle" && <Idle qrValue={qrValue} seconds={seconds} onFace={() => setScreen("face")} onCard={() => setScreen("card")} onDev={activateWalletQr} />}
+    {screen === "idle" && <Idle seconds={seconds} onFace={() => setScreen("face")} onCard={() => setScreen("card")} onDev={activateWalletQr} />}
     {screen === "face" && <Face active={faceActive} onActivate={activateFace} onCancel={reset} />}
     {screen === "face-password" && <FacePassword password={facePassword} submitting={facePasswordSubmitting} error={facePasswordError} setPassword={setFacePassword} onCancel={reset} onContinue={submitFacePassword} />}
     {screen === "card" && <CardDetails name={name} cpf={cpf} birth={birth} setName={setName} setCpf={setCpf} setBirth={setBirth} onCancel={reset} onContinue={requestServerAuthorization} />}
