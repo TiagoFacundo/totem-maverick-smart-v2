@@ -106,6 +106,12 @@ log "instalando artefatos da aplicação"
 run rm -rf "$APP_DIR/dist"
 run cp -a "$REPO_DIR/dist" "$APP_DIR/dist"
 run cp "$REPO_DIR/package.json" "$APP_DIR/package.json"
+if [[ -d "$REPO_DIR/node_modules" ]]; then
+  run rm -rf "$APP_DIR/node_modules"
+  run cp -a "$REPO_DIR/node_modules" "$APP_DIR/node_modules"
+else
+  fail "node_modules não encontrado; execute pnpm install antes de usar --skip-build"
+fi
 run chown -R "$APP_USER:$APP_GROUP" "$APP_DIR"
 run chmod -R u=rwX,g=rX,o= "$APP_DIR"
 
