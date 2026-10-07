@@ -39,8 +39,35 @@ export function Idle({ seconds, onFace, onCard, onDev }: { seconds: number; onFa
   </main>;
 }
 
-export function Face({ active, onActivate, onCancel }: { active: boolean; onActivate: () => void; onCancel: () => void }) {
-  return <main className="ref-centered"><div className="eyebrow">FACE ID</div><h1>Captura facial</h1><button data-touch-target="150" className={`face-orbit ${active ? "active" : ""}`} onClick={onActivate} aria-label="Iniciar captura facial"><Fingerprint /></button><p>{active ? "Validando identidade..." : "Posicione seu rosto dentro do círculo"}</p><button data-touch-target="48" className="danger-button" onClick={onCancel}>Cancelar</button></main>;
+export function Face({ active, onCapture, onCancel }: { active: boolean; onCapture: (imageBase64: string) => void; onCancel: () => void }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [cameraError, setCameraError] = useState("");
+
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    let cancelled = false;
+    const startCamera = async () => {
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) throw new Error("Câmera indisponível neste dispositivo");
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+        if (cancelled) { stream.getTracks().forEach(track => track.stop()); return; }
+        if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
+      } catch { setCameraError("Não foi possível acessar a Logitech Brio 500. Verifique a conexão e a permissão da câmera."); }
+    };
+    void startCamera();
+    return () => { cancelled = true; stream?.getTracks().forEach(track => track.stop()); };
+  }, []);
+
+  const capture = () => {
+    const video = videoRef.current;
+    if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) { setCameraError("A câmera ainda está iniciando. Aguarde um instante e tente novamente."); return; }
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
+    onCapture(canvas.toDataURL("image/jpeg", 0.86));
+  };
+
+  return <main className="ref-centered face-screen"><div className="eyebrow">FACE ID</div><h1>Captura facial</h1><div className="camera-frame"><video ref={videoRef} autoPlay muted playsInline aria-label="Prévia da Logitech Brio 500" /><div className="face-guide" /></div><p>{active ? "Validando identidade..." : cameraError || "Posicione seu rosto dentro do círculo"}</p><button data-touch-target="48" className="teal-action camera-capture" onClick={capture} disabled={active || Boolean(cameraError)}>{active ? "Validando..." : "Capturar e reconhecer"}</button><button data-touch-target="48" className="danger-button" onClick={onCancel}>Cancelar</button></main>;
 }
 
 export function FacePassword({ password, submitting, error, setPassword, onCancel, onContinue }: { password: string; submitting: boolean; error: string; setPassword: (value: string) => void; onCancel: () => void; onContinue: () => void }) {
@@ -122,11 +149,11 @@ export default function Home() {
   useEffect(() => { if (screen !== "completed") return; const id = window.setTimeout(reset, 4000); return () => window.clearTimeout(id); }, [reset, screen]);
 
   const requestServerAuthorization = async () => { const id = createSessionId(); try { await requestAuthorizedPour(tapApi, id, PRODUCT); reset(); } catch { setScreen("offline"); } };
-  const activateFace = async () => {
+  const activateFace = async (faceImageBase64: string) => {
     if (faceActive) return;
     setFaceActive(true);
     try {
-      const recognition = await recognizeFace(tapApi, { face_image_base64: "simulated-face-capture", nonce, timestamp: Math.floor(Date.now() / 1000) });
+      const recognition = await recognizeFace(tapApi, { face_image_base64: faceImageBase64, nonce, timestamp: Math.floor(Date.now() / 1000) });
       if (!recognition) { reset(); return; }
       setFaceToken(recognition.faceToken);
       setFacePasswordError("");
@@ -151,7 +178,7 @@ export default function Home() {
 
   return <div className="kiosk-app"><div className="kiosk-stage"><Header offline={!isOnline || screen === "offline"} />
     {screen === "idle" && <Idle seconds={seconds} onFace={() => setScreen("face")} onCard={() => setScreen("card")} onDev={activateWalletQr} />}
-    {screen === "face" && <Face active={faceActive} onActivate={activateFace} onCancel={reset} />}
+    {screen === "face" && <Face active={faceActive} onCapture={activateFace} onCancel={reset} />}
     {screen === "face-password" && <FacePassword password={facePassword} submitting={facePasswordSubmitting} error={facePasswordError} setPassword={setFacePassword} onCancel={reset} onContinue={submitFacePassword} />}
     {screen === "card" && <CardDetails name={name} cpf={cpf} birth={birth} setName={setName} setCpf={setCpf} setBirth={setBirth} onCancel={reset} onContinue={requestServerAuthorization} />}
     {screen === "pouring" && <Pouring sessionId={sessionId} poured={poured} maxValueCents={maxValueCents} onFinish={() => void finish()} onEmergency={emergency} />}

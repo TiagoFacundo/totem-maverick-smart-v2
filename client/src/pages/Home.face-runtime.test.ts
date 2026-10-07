@@ -32,6 +32,12 @@ import Home from "./Home";
 
 describe("runtime do fluxo de Face ID", () => {
   beforeEach(() => {
+    Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [{ stop: vi.fn() }] }) } });
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+    Object.defineProperty(HTMLVideoElement.prototype, "videoWidth", { configurable: true, get: () => 640 });
+    Object.defineProperty(HTMLVideoElement.prototype, "videoHeight", { configurable: true, get: () => 480 });
+    Object.defineProperty(HTMLVideoElement.prototype, "readyState", { configurable: true, get: () => 4 });
+    vi.spyOn(HTMLCanvasElement.prototype, "toDataURL").mockReturnValue("data:image/jpeg;base64,brio-capture");
     tapMocks.authorizeQr.mockReset().mockResolvedValue({ authorized: true });
     tapMocks.authorizeFace.mockReset();
     tapMocks.heartbeat.mockReset().mockResolvedValue({ acknowledged: true, status: "idle" });
@@ -41,7 +47,7 @@ describe("runtime do fluxo de Face ID", () => {
     tapMocks.emergencyStop.mockReset().mockResolvedValue({ accepted: true, status: "error" });
   });
 
-  afterEach(() => cleanup());
+  afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
   it("mostra a senha somente após o reconhecimento facial confirmado pelo servidor", async () => {
     tapMocks.authorizeFace.mockResolvedValue({ recognized: true, face_token: "face-token-runtime", user_id: "cliente-runtime" });
@@ -50,10 +56,10 @@ describe("runtime do fluxo de Face ID", () => {
 
     expect(screen.queryByRole("heading", { name: "Informe sua senha" })).toBeNull();
     await user.click(screen.getByRole("button", { name: /usar face id/i }));
-    await user.click(screen.getByRole("button", { name: "Iniciar captura facial" }));
+    await user.click(screen.getByRole("button", { name: "Capturar e reconhecer" }));
 
     expect(await screen.findByRole("heading", { name: "Informe sua senha" })).not.toBeNull();
-    expect(tapMocks.authorizeFace).toHaveBeenCalledWith(expect.objectContaining({ phase: "recognize", face_image_base64: "simulated-face-capture" }));
+    expect(tapMocks.authorizeFace).toHaveBeenCalledWith(expect.objectContaining({ phase: "recognize", face_image_base64: "data:image/jpeg;base64,brio-capture" }));
   });
 
   it("direciona o cliente validado à tela Servindo seu chopp com os limites autorizados", async () => {
@@ -64,7 +70,7 @@ describe("runtime do fluxo de Face ID", () => {
     render(createElement(Home));
 
     await user.click(screen.getByRole("button", { name: /usar face id/i }));
-    await user.click(screen.getByRole("button", { name: "Iniciar captura facial" }));
+    await user.click(screen.getByRole("button", { name: "Capturar e reconhecer" }));
     await user.type(await screen.findByLabelText("Senha da Wallet"), "250712");
     await user.click(screen.getByRole("button", { name: "Continuar" }));
 
@@ -98,7 +104,7 @@ describe("runtime do fluxo de Face ID", () => {
     render(createElement(Home));
 
     await user.click(screen.getByRole("button", { name: /usar face id/i }));
-    await user.click(screen.getByRole("button", { name: "Iniciar captura facial" }));
+    await user.click(screen.getByRole("button", { name: "Capturar e reconhecer" }));
     await user.type(await screen.findByLabelText("Senha da Wallet"), "senha-incorreta");
     await user.click(screen.getByRole("button", { name: "Continuar" }));
 
@@ -113,7 +119,7 @@ describe("runtime do fluxo de Face ID", () => {
     render(createElement(Home));
 
     await user.click(screen.getByRole("button", { name: /usar face id/i }));
-    await user.click(screen.getByRole("button", { name: "Iniciar captura facial" }));
+    await user.click(screen.getByRole("button", { name: "Capturar e reconhecer" }));
 
     await waitFor(() => screen.getByRole("button", { name: /usar face id/i }));
     expect(screen.queryByRole("heading", { name: "Informe sua senha" })).toBeNull();

@@ -19,7 +19,7 @@ describe("interface vertical de 7 polegadas", () => {
     const noop = () => undefined;
     const screens = createElement("div", null,
       createElement(Idle, { qrValue: "wallet://demo", seconds: 30, onFace: noop, onCard: noop, onDev: noop }),
-      createElement(Face, { active: false, onActivate: noop, onCancel: noop }),
+      createElement(Face, { active: false, onCapture: noop, onCancel: noop }),
       createElement(FacePassword, { password: "", submitting: false, setPassword: noop, onCancel: noop, onContinue: noop }),
       createElement(CardDetails, { name: "Cliente", cpf: "12345678901", birth: "01/01/1990", setName: noop, setCpf: noop, setBirth: noop, onCancel: noop, onContinue: noop }),
       createElement(Pouring, { sessionId: "session-01", poured: 100, maxValueCents: 5000, onFinish: noop, onEmergency: noop }),
@@ -47,7 +47,7 @@ describe("interface vertical de 7 polegadas", () => {
     expect(homeSource).toContain('if (screen !== "idle") return;');
     expect(homeSource).toContain("getIdlePourTransition(command)");
     expect(homeSource).toContain("setScreen(transition.screen)");
-    expect(homeSource).toContain('await recognizeFace(tapApi, { face_image_base64: "simulated-face-capture", nonce');
+    expect(homeSource).toContain('await recognizeFace(tapApi, { face_image_base64: faceImageBase64, nonce');
     expect(homeSource).toContain('if (!recognition) { reset(); return; }');
   });
 });

@@ -59,6 +59,27 @@ sudo raspberry_pi/install.sh --enable --kiosk
 
 O modo `--kiosk` não abre um site público nem exige navegação manual: o serviço inicia a interface local em `127.0.0.1:3000` usando uma janela de aplicativo sem abas, barra de endereço ou controles do navegador, ocupando toda a tela do totem. A internet é usada somente pelas chamadas da aplicação para a API de autorização, heartbeat e telemetria.
 
+## Logitech Brio 500 e captura facial
+
+Conecte a Logitech Brio 500 a uma porta USB 3.0 do Raspberry Pi e confirme que ela aparece no sistema:
+
+```bash
+lsusb | grep -i -E 'logitech|brio'
+v4l2-ctl --list-devices
+```
+
+Na tela **FACE ID**, o aplicativo solicita permissão de câmera, mostra a prévia da Brio 500, captura um quadro JPEG somente quando o operador toca em **Capturar e reconhecer** e envia o campo `face_image_base64` para `POST /api/public/tap/TORNEIRA_01/authorize/face`. A prévia é encerrada ao sair da tela e o stream não é mantido em segundo plano.
+
+> A captura está implementada no totem, mas a decisão biométrica continua sendo feita pelo servidor central. O endpoint deve devolver `recognized`, `face_token` e `user_id`; sem esses dados o totem não libera a etapa de senha nem a solenoide. A imagem facial não deve ser armazenada localmente.
+
+Para testar a permissão da câmera, reinicie o kiosk após conectar a Brio:
+
+```bash
+sudo systemctl restart maverick-totem-kiosk
+```
+
+Não conecte a câmera a um hub USB sem alimentação suficiente. Para uso comercial, valide consentimento, retenção, criptografia e base legal do tratamento biométrico com o responsável técnico/jurídico.
+
 O instalador preserva arquivos de configuração existentes. Para uma instalação a partir de um build já gerado, use `--skip-build` e disponibilize um diretório de repositório contendo `dist/index.js`:
 
 ```bash
